@@ -17,19 +17,34 @@ int state = RADIOLIB_ERR_NONE; // Переменная, хранящая код 
 SPIClass SPI_MODEM;
 
 #ifdef SX1278_MODEM
-  SX1278 radio = new Module(NSS_PIN, BUSY_PIN, NRST_PIN, DIO1_PIN); //Инициализируем экземпляр радио
-#elif defined(SX1278_MODEM)
-  SX1262 radio = new Module(NSS_PIN, BUSY_PIN, NRST_PIN, DIO1_PIN); //Инициализируем экземпляр радио
+  #define RADIO_CLASS_NAME SX1278
+  // Функция для встановлення налаштувань радіо-модуля SX1278
+  // Ця функція повинна бути реалізована в іншому файлі, якщо вона не переопределена
+  // в іншому файлі, то буде використовуватися ця реалізація
+  //void radio_setSettings(RADIO_CLASS_NAME radio, LORA_CONFIGURATION config_radio) __attribute__ ((weak));
+#elif defined(SX1268_MODEM)
+  #define RADIO_CLASS_NAME SX1268
+  // Функція для встановлення налаштувань радіо-модуля SX1262
+  // Ця функція повинна бути реалізована в іншому файлі, якщо вона не переопределена
+  // в іншому файлі, то буде використовуватися ця реалізація
+  //void radio_setSettings(RADIO_CLASS_NAME radio, LORA_CONFIGURATION config_radio) __attribute__ ((weak));
 #endif
 
+//#ifdef SX1278_MODEM
+  RADIO_CLASS_NAME radio = new Module(NSS_PIN, BUSY_PIN, NRST_PIN, DIO1_PIN); //Инициализируем экземпляр радио
+//#elif defined(SX1268_MODEM)
+  //SX1268 radio = new Module(NSS_PIN, BUSY_PIN, NRST_PIN, DIO1_PIN); //Инициализируем экземпляр радио
+//#endif
 
 
 
 
+// Add this declaration if 'display' is defined elsewhere (e.g., in display.h or another source file)
+extern Adafruit_SSD1306 display; // Replace 'DisplayClass' with the actual class type of 'display'
 
-
-
-
+void print_to_terminal_radio_state(String state, String RADIO_NAME);
+void displayPrintState(int16_t x, int16_t y, String RadioName, String state);
+void printStateResultTX(int &state, String &transmit_str);
 
 
 
@@ -72,7 +87,7 @@ struct LORA_CONFIGURATION
   uint8_t spreadingFactor = 9;   //Коэффициент расширения (по-умолчанию 9)
   uint8_t codingRate = 7;         //Скорость кодирования (по-умолчанию 7)
   uint8_t syncWord = 0x18;        //Слово синхронизации (по-умолчанию 0х18). ВНИМАНИЕ! Значение 0x34 зарезервировано для сетей LoRaWAN и нежелательно для использования
-  int8_t outputPower = 10;        //Установить выходную мощность (по-умолчанию 10 дБм) (допустимый диапазон -3 - 17 дБм) ПРИМЕЧАНИЕ: значение 20 дБм позволяет работать на большой мощности, но передача рабочий цикл НЕ ДОЛЖЕН ПРЕВЫШАТЬ 1
+  int8_t outputPower = 15;        //Установить выходную мощность (по-умолчанию 15 дБм) (допустимый диапазон -3 - 17 дБм) ПРИМЕЧАНИЕ: значение 20 дБм позволяет работать на большой мощности, но передача рабочий цикл НЕ ДОЛЖЕН ПРЕВЫШАТЬ 1
   uint8_t currentLimit = 100;      //Установить предел защиты по току (по-умолчанию до 80 мА) (допустимый диапазон 45 - 240 мА) ПРИМЕЧАНИЕ: установить значение 0 для отключения защиты от перегрузки по току
   int16_t preambleLength = 8;    //Установить длину преамбулы (по-умолчанию в 8 символов) (допустимый диапазон 6 - 65535)
   uint8_t gain = 0;               //Установить регулировку усилителя (по-умолчанию 1) (допустимый диапазон 1 - 6, где 1 - максимальный рост) ПРИМЕЧАНИЕ: установить значение 0, чтобы включить автоматическую регулировку усиления оставьте в 0, если вы не знаете, что вы делаете
@@ -151,96 +166,6 @@ bool ICACHE_RAM_ATTR WaitOnBusy()
 }
 
 
-/**
-* @brief Функція для виявлення LoRa-пакету на заданому радіо
-*/
-void detected_CAD()
-{
-  int state;
-  state = radio.getChannelScanResult();
-  if (state == RADIOLIB_LORA_DETECTED) {
-    // LoRa пакет було виявлено
-    #ifdef DEBUG_PRINT
-      Serial.println(F("RADIO RX packet detected!"));
-    #endif
-  } else {
-    //
-    #ifdef DEBUG_PRINT
-      Serial.print(F("RADIO RX packet detected Failed, code "));
-      Serial.println(state);
-    #endif
-  }
-}
-
-
-/**
-* @brief Функція для виявлення LoRa преамбули на заданому радіо
-* 
-*/
-void detectedPreamble()
-{
-  int state;
-  // Скануємо канал для виявлення LoRa преамбули
-  state = radio.scanChannel();
-  if (state == RADIOLIB_LORA_DETECTED)
-  {
-    // LoRa преамбула була виявлена
-    #ifdef DEBUG_PRINT
-      Serial.println(F("Preamble detected!"));
-    #endif
-
-  } else {
-    // LoRa преамбула не була виявлена
-    #ifdef DEBUG_PRINT
-      Serial.print(F("Preamble detected failed, code "));
-      Serial.println(state);
-    #endif
-    
-  }
-}
-
-
-
-
-/**
- * @brief Функция для печати состояния радио в терминал
- * 
- * @param RadioName Имя радио
- * @param state Состояние радио
- */
-void print_to_terminal_radio_state(String state, String RADIO_NAME) __attribute__ ((weak));
-
-/**
- * @brief Функція для виведення стану радіо на дисплей
- * 
- * @param state Строка состоянія радіо
- */
-void displayPrintState(int16_t x, int16_t y, String RadioName, String state) __attribute__ ((weak));
-
-void printStateResultTX(int &state, String &transmit_str) __attribute__ ((weak));
-
-
-
-
-
-
-/**
- * @brief Функція для встановлення налаштувань радіо-модуля.
- * 
- */
-#ifdef SX1278_MODEM
-  #define RADIO_CLASS_NAME SX1278
-  // Функция для встановлення налаштувань радіо-модуля SX1278
-  // Ця функція повинна бути реалізована в іншому файлі, якщо вона не переопределена
-  // в іншому файлі, то буде використовуватися ця реалізація
-  void radio_setSettings(RADIO_CLASS_NAME radio, LORA_CONFIGURATION config_radio) __attribute__ ((weak));
-#elif defined(SX1262_MODEM)
-  #define RADIO_CLASS_NAME SX1262
-  // Функція для встановлення налаштувань радіо-модуля SX1262
-  // Ця функція повинна бути реалізована в іншому файлі, якщо вона не переопределена
-  // в іншому файлі, то буде використовуватися ця реалізація
-void radio_setSettings(RADIO_CLASS_NAME radio, LORA_CONFIGURATION config_radio) __attribute__ ((weak));
-#endif
 
 
 
@@ -342,80 +267,101 @@ void radio_setSettings(RADIO_CLASS_NAME radio, LORA_CONFIGURATION config_radio)
   // Устанавливаем необходимую нам частоту работы трансивера
   if (radio.setFrequency(config_radio.frequency) == RADIOLIB_ERR_INVALID_FREQUENCY) {
     #ifdef DEBUG_PRINT
-    Serial.println(F("Selected frequency is invalid for this module!"));
+      Serial.println(F("Selected frequency is invalid for this module!"));
+      display.clearDisplay();
+      displayPrintState(5, 5, RADIO_NAME, F("ERROR FREQ"));
+      displayPrintState(5, 20, RADIO_NAME, F("Selected frequency is invalid for this module!"));
     #endif
     while (true);
   }
   #ifdef DEBUG_PRINT
-  Serial.print(F("Set frequency = "));
-  Serial.println(config_radio.frequency);
+    Serial.print(F("Set frequency = "));
+    Serial.println(config_radio.frequency);
   #endif
 
 
   // установить полосу пропускания до 250 кГц
   if (radio.setBandwidth(config_radio.bandwidth) == RADIOLIB_ERR_INVALID_BANDWIDTH) {
     #ifdef DEBUG_PRINT
-    Serial.println(F("Selected bandwidth is invalid for this module!"));
+      Serial.println(F("Selected bandwidth is invalid for this module!"));
+      display.clearDisplay();
+      displayPrintState(5, 5, RADIO_NAME, F("ERROR BADWIDTH"));
+      displayPrintState(5, 20, RADIO_NAME, F("Selected bandwidth is invalid for this module!"));
     #endif
     while (true);
   }
   #ifdef DEBUG_PRINT
-  Serial.print(F("Set bandWidth = "));
-  Serial.println(config_radio.bandwidth);
+    Serial.print(F("Set bandWidth = "));
+    Serial.println(config_radio.bandwidth);
   #endif
 
   // коэффициент расширения 
   if (radio.setSpreadingFactor(config_radio.spreadingFactor) == RADIOLIB_ERR_INVALID_SPREADING_FACTOR) {
     #ifdef DEBUG_PRINT
-    Serial.println(F("Selected spreading factor is invalid for this module!"));
+      Serial.println(F("Selected spreading factor is invalid for this module!"));
+      display.clearDisplay();
+      displayPrintState(5, 5, RADIO_NAME, F("ERROR SF"));
+      displayPrintState(5, 20, RADIO_NAME, F("Selected spreading factor is invalid for this module!"));
     #endif
     while (true);
   }
   #ifdef DEBUG_PRINT
-  Serial.print(F("Set spreadingFactor = "));
-  Serial.println(config_radio.spreadingFactor);
+    Serial.print(F("Set spreadingFactor = "));
+    Serial.println(config_radio.spreadingFactor);
   #endif
 
   // установить скорость кодирования
   if (radio.setCodingRate(config_radio.codingRate) == RADIOLIB_ERR_INVALID_CODING_RATE) {
     #ifdef DEBUG_PRINT
-    Serial.println(F("Selected coding rate is invalid for this module!"));
+      Serial.println(F("Selected coding rate is invalid for this module!"));
+      display.clearDisplay();
+      displayPrintState(5, 5, RADIO_NAME, F("ERROR CR"));
+      displayPrintState(5, 20, RADIO_NAME, F("Selected coding rate is invalid for this module!"));
     #endif
     while (true);
   }
   #ifdef DEBUG_PRINT
-  Serial.print(F("Set codingRate = "));
-  Serial.println(config_radio.codingRate);
+    Serial.print(F("Set codingRate = "));
+    Serial.println(config_radio.codingRate);
   #endif
 
   // Устанавливаем слово синхронизации
   if (radio.setSyncWord(config_radio.syncWord) != RADIOLIB_ERR_NONE) {
     #ifdef DEBUG_PRINT
-    Serial.println(F("Unable to set sync word!"));
+      Serial.println(F("Unable to set sync word!"));
+      display.clearDisplay();
+      displayPrintState(5, 5, RADIO_NAME, F("ERROR SYNC"));
+      displayPrintState(5, 20, RADIO_NAME, F("Unable to set sync word!"));
     #endif
     while (true);
   }
   #ifdef DEBUG_PRINT
-  Serial.print(F("Set syncWord = "));
-  Serial.println(config_radio.syncWord);
+    Serial.print(F("Set syncWord = "));
+    Serial.println(config_radio.syncWord);
   #endif
 
   // Устанавливаем выходную мощность трансивера
   if (radio.setOutputPower(config_radio.outputPower) == RADIOLIB_ERR_INVALID_OUTPUT_POWER) {
     #ifdef DEBUG_PRINT
-    Serial.println(F("Selected output power is invalid for this module!"));
+      Serial.println(F("Selected output power is invalid for this module!"));
+      display.clearDisplay();
+      displayPrintState(5, 5, RADIO_NAME, F("ERROR POWER"));
+      displayPrintState(5, 20, RADIO_NAME, F("Selected output power is invalid for this module!"));
     #endif
     while (true);
   }
   #ifdef DEBUG_PRINT
-  Serial.print(F("Set setOutputPower = "));
-  Serial.println(config_radio.outputPower); 
+    Serial.print(F("Set setOutputPower = "));
+    Serial.println(config_radio.outputPower); 
   #endif
 
   // установить длину преамбулы (допустимый диапазон 6 - 65535)
   if (radio.setPreambleLength(config_radio.preambleLength) == RADIOLIB_ERR_INVALID_PREAMBLE_LENGTH) {
     #ifdef DEBUG_PRINT
-    Serial.println(F("Selected preamble length is invalid for this module!"));
+      Serial.println(F("Selected preamble length is invalid for this module!"));
+      display.clearDisplay();
+      displayPrintState(5, 5, RADIO_NAME, F("ERROR PREAMBLE"));
+      displayPrintState(5, 20, RADIO_NAME, F("Selected preamble length is invalid for this module!"));
     #endif
     while (true);
   }
@@ -425,7 +371,7 @@ void radio_setSettings(RADIO_CLASS_NAME radio, LORA_CONFIGURATION config_radio)
 
   
 
-  Serial.println(F("All settings successfully changed!"));
+  Serial.println(F("All settings successfully set!"));
 
   Serial.print(TABLE_LEFT);
   Serial.print(F("END SETTINGTH OF RADIO "));
@@ -440,17 +386,6 @@ void radio_setSettings(RADIO_CLASS_NAME radio, LORA_CONFIGURATION config_radio)
 
 
 
-
-
-
-
-
-
-
-
-
-// Add this declaration if 'display' is defined elsewhere (e.g., in display.h or another source file)
-extern Adafruit_SSD1306 display; // Replace 'DisplayClass' with the actual class type of 'display'
 
 
 void transmit_and_print_data(String &transmit_str)
@@ -582,6 +517,53 @@ void RadioStart()
 
 
 
+/**
+* @brief Функція для виявлення LoRa-пакету на заданому радіо
+*/
+void detected_CAD()
+{
+  int state;
+  state = radio.getChannelScanResult();
+  if (state == RADIOLIB_LORA_DETECTED) {
+    // LoRa пакет було виявлено
+    #ifdef DEBUG_PRINT
+      Serial.println(F("RADIO RX packet detected!"));
+    #endif
+  } else {
+    //
+    #ifdef DEBUG_PRINT
+      Serial.print(F("RADIO RX packet detected Failed, code "));
+      Serial.println(state);
+    #endif
+  }
+}
+
+
+/**
+* @brief Функція для виявлення LoRa преамбули на заданому радіо
+* 
+*/
+void detectedPreamble()
+{
+  int state;
+  // Скануємо канал для виявлення LoRa преамбули
+  state = radio.scanChannel();
+  if (state == RADIOLIB_LORA_DETECTED)
+  {
+    // LoRa преамбула була виявлена
+    #ifdef DEBUG_PRINT
+      Serial.println(F("Preamble detected!"));
+    #endif
+
+  } else {
+    // LoRa преамбула не була виявлена
+    #ifdef DEBUG_PRINT
+      Serial.print(F("Preamble detected failed, code "));
+      Serial.println(state);
+    #endif
+    
+  }
+}
 
 
 
