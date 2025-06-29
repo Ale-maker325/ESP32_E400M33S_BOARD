@@ -215,7 +215,7 @@ void print_to_terminal_radio_state(String state, String RADIO_NAME) __attribute_
  * 
  * @param state Строка состоянія радіо
  */
-void displayPrintState(int16_t x, int16_t y, String state) __attribute__ ((weak));
+void displayPrintState(int16_t x, int16_t y, String RadioName, String state) __attribute__ ((weak));
 
 void printStateResultTX(int &state, String &transmit_str) __attribute__ ((weak));
 
@@ -256,21 +256,25 @@ void radio_setSettings(RADIO_CLASS_NAME radio, LORA_CONFIGURATION config_radio) 
 */
 void printRadioBeginResult(int &STATE)
 {
-  int x,y = 5;
+  int x = 5;
+  int y = 5;
+  String good = F("INIT_GOOD");
   
   if (STATE == RADIOLIB_ERR_NONE) {
     #ifdef DEBUG_PRINT
-      
-      print_to_terminal_radio_state(RADIO_NAME, F("INIT_GOOD"));
+      // Якщо ініціалізація пройшла успішно, виводимо повідомлення на термінал
+      print_to_terminal_radio_state(RADIO_NAME, good);
     #endif
-      displayPrintState(x, y, F("INIT_GOOD"));
+      // Якщо ініціалізація пройшла успішно, виводимо повідомлення на дисплей
+      displayPrintState(x, y, RADIO_NAME, good);
+      
   } else {
 
     String str = "ERROR " + (String)STATE;
     #ifdef DEBUG_PRINT
-      print_to_terminal_radio_state(RADIO_NAME, F("INIT_GOOD"));
+      print_to_terminal_radio_state(RADIO_NAME, str);
     #endif
-      displayPrintState(x, y, RADIO_NAME);
+      displayPrintState(x, y, RADIO_NAME, str);
     while (true);
   }
 }
@@ -297,17 +301,18 @@ void radioBeginAll()
   // Встановлюємо контакт NSS_PIN в HIGH, щоб не було конфліктів з іншими SPI-пристроями
   pinMode(NSS_PIN, OUTPUT);
   selectRadio();
+  
   #ifdef DEBUG_PRINT
-    Serial.println(" ");
-    Serial.println(F(""));
-    Serial.println(" ");
-    Serial.println(F("RADIO INIT....."));
+    Serial.println("");
+    Serial.println(F("START RADIO INIT....."));
   #endif
   // Ініціалізуємо радіо
   int state = radio.begin();
 
+  // Якщо ініціалізація пройшла успішно, то виводимо повідомлення на термінал та на дисплей
   printRadioBeginResult(state);
 
+  //Зачекаємо, поки радіо не буде готове до роботи
   WaitOnBusy();
  
   #ifdef DEBUG_PRINT

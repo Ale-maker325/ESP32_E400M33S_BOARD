@@ -25,26 +25,21 @@ Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &display_wire, OLED_RESET)
 
 
 /**
-* @brief Функция инициализации дисплея 
+* @brief Функція ініциалізації дисплея
 * 
 */
 void displayInit()
 {
 
-  //Инициализируем дисплей
+  //Ініціалізуємо I2C шину для дисплея
   if(!display.begin(SSD1306_SWITCHCAPVCC, SCREEN_ADDRESS)) {// SSD1306_SWITCHCAPVCC = напряжение дисплея от 3.3V
     #ifdef DEBUG_PRINT
       Serial.println(F("SSD1306 ERROR INIT"));
     #endif
-    for(;;); // Don't proceed, loop forever
+    for(;;); // Якщо дисплей не ініціалізувався, то зацикливаемся
   }
 
-  // Показываем содержимое буфера дисплея, созданное по-умолчанию
-  // библиотека по-умолчанию использует эмблему Adafruit.
-  //display.display();
-  //delay(1000); // Pause for 2 seconds
-
-  //Очищаем буффер дисплея
+  //Очищуємо буфер дисплея
   display.clearDisplay();
 
   display.setTextSize(1);                 // Normal 1:1 pixel scale
@@ -81,7 +76,7 @@ void displayInit()
    */
   void print_to_terminal_radio_state(String RadioName, String state)
   {
-    String str = RadioName + " : " + state;
+    String str = RadioName + state;
     Serial.println(str);
   }
 
@@ -105,7 +100,7 @@ void displayInit()
  */
 void displayPrintState(int16_t x, int16_t y, String RadioName, String state)
 {
-  String str = RadioName + " : " + state;
+  String str = RadioName + state;
   display.setCursor(x, y);
   display.print(str);
   display.display();

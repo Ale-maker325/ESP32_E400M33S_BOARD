@@ -31,6 +31,21 @@ uint64_t count = 0;           //Лічильник для відстеження
 // void displayApbFrequency() { int apb_freq = esp_clk_apb_freq(); Serial.print("APB Frequency: "); Serial.print(apb_freq); Serial.println(" Hz"); }
 // void displayRtcTime() { uint64_t rtc_time = esp_clk_rtc_time(); Serial.print("RTC Time: "); Serial.print(rtc_time); Serial.println(" microseconds"); }
 
+/**
+ * @brief  Функція для виводу інформації про чіп ESP32
+ * 
+ */
+void printChipInfo() {
+  #ifdef DEBUG_PRINT
+    Serial.println("");
+    Serial.print(TABLE_LEFT);
+    Serial.print(F("CHIP INFO"));
+    Serial.println(TABLE_RIGHT);
+    Serial.printf("Chip Model %s, ChipRevision %d, Cpu Freq %d, SDK Version %s\n", ESP.getChipModel(), ESP.getChipRevision(), ESP.getCpuFreqMHz(), ESP.getSdkVersion());
+    Serial.println("***********************************************************************");
+    Serial.println("");
+  #endif
+}
 
 void setup() {
   //Ініціалізуємо серійний порт для виводу інформації
@@ -44,17 +59,15 @@ void setup() {
   SPI_MODEM.begin(SCK_RADIO, MISO_RADIO, MOSI_RADIO);
   
   #ifdef DEBUG_PRINT
-    Serial.printf("Chip Model %s, ChipRevision %d, Cpu Freq %d, SDK Version %s\n", ESP.getChipModel(), ESP.getChipRevision(), ESP.getCpuFreqMHz(), ESP.getSdkVersion());
+    printChipInfo();
   #endif
     
   //Ініціалізуємо дисплей
   displayInit();
 
   #ifdef DEBUG_PRINT
-    Serial.print(TABLE_LEFT);
-    Serial.print(F("DISPLAY INIT"));
-    Serial.println(TABLE_RIGHT);
-    Serial.println(SPACE);
+    Serial.println(F("DISPLAY INIT SUCCESS!"));
+    Serial.println("");
   #endif
   
   pinMode(LED_PIN, OUTPUT);      //Контакт управління світлодіодом налаштовуємо як вихідний
@@ -62,9 +75,15 @@ void setup() {
   
   //Встановлюємо параметри конфігурації радіо-модуля.
   setRadioMode();
-
+  //Ініціалізуємо радіо-модуль
   radioBeginAll();
-    
+  
+  #ifdef DEBUG_PRINT
+    Serial.print(TABLE_LEFT);
+    Serial.print(F("RADIO INIT SUCCESS"));
+    Serial.println(TABLE_RIGHT);
+    Serial.println(SPACE);
+  #endif
 
   #ifdef DEBUG_PRINT
     Serial.println(SPACE);
