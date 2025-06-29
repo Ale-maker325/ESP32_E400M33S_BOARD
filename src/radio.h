@@ -4,10 +4,11 @@
 
 #include <Arduino.h>
 #include <SPI.h>
+#include <display.h>
 #include <RadioLib.h>
 #include <stdint.h>
 #include <settings.h>
-#include <display.h>
+
 
 
 
@@ -20,6 +21,14 @@ SPIClass SPI_MODEM;
 #elif defined(SX1278_MODEM)
   SX1262 radio = new Module(NSS_PIN, BUSY_PIN, NRST_PIN, DIO1_PIN); //Инициализируем экземпляр радио
 #endif
+
+
+
+
+
+
+
+
 
 
 
@@ -199,14 +208,7 @@ void detectedPreamble()
  * @param RadioName Имя радио
  * @param state Состояние радио
  */
-void print_to_terminal_radio_state(String state, String &RADIO_NAME) __attribute__ ((weak));
-
-
-
-
-
-
-
+void print_to_terminal_radio_state(String state, String RADIO_NAME) __attribute__ ((weak));
 
 /**
  * @brief Функція для виведення стану радіо на дисплей
@@ -214,6 +216,8 @@ void print_to_terminal_radio_state(String state, String &RADIO_NAME) __attribute
  * @param state Строка состоянія радіо
  */
 void displayPrintState(int16_t x, int16_t y, String state) __attribute__ ((weak));
+
+void printStateResultTX(int &state, String &transmit_str) __attribute__ ((weak));
 
 
 
@@ -259,7 +263,7 @@ void printRadioBeginResult(int &STATE)
       
       print_to_terminal_radio_state(RADIO_NAME, F("INIT_GOOD"));
     #endif
-      displayPrintState(x, y, RADIO_NAME, F("INIT_GOOD"));
+      displayPrintState(x, y, F("INIT_GOOD"));
   } else {
 
     String str = "ERROR " + (String)STATE;
@@ -284,7 +288,6 @@ void ICACHE_RAM_ATTR selectRadio()
 
 
 
-
 /**
  * @brief Налаштування
  * заданными в файле "settings.h".
@@ -293,6 +296,7 @@ void radioBeginAll()
 {
   // Встановлюємо контакт NSS_PIN в HIGH, щоб не було конфліктів з іншими SPI-пристроями
   pinMode(NSS_PIN, OUTPUT);
+  selectRadio();
   #ifdef DEBUG_PRINT
     Serial.println(" ");
     Serial.println(F(""));
@@ -432,12 +436,18 @@ void radio_setSettings(RADIO_CLASS_NAME radio, LORA_CONFIGURATION config_radio)
 
 
 
-/**
-* @brief Функция отправляет данные, выводит на экран информацию об отправке,
-* выводит информацию об отправке в сериал-порт
-* 
-* @param transmit_str - строка для передачи
-*/
+
+
+
+
+
+
+
+
+// Add this declaration if 'display' is defined elsewhere (e.g., in display.h or another source file)
+extern Adafruit_SSD1306 display; // Replace 'DisplayClass' with the actual class type of 'display'
+
+
 void transmit_and_print_data(String &transmit_str)
 {
   display.clearDisplay();
@@ -573,4 +583,4 @@ void RadioStart()
 
 
 
-#endif;
+#endif

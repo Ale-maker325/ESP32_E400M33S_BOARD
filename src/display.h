@@ -1,6 +1,7 @@
 #ifndef ______DISPLAY__DATA_______
 #define ______DISPLAY__DATA_______
 
+#include <Arduino.h>
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
 #include <radio.h>
@@ -78,7 +79,7 @@ void displayInit()
    * @param RadioName - имя радио
    * @param state     - текущее состояние радио - это просто информационная сторока
    */
-  void print_to_terminal_radio_state(String &RadioName, String state)
+  void print_to_terminal_radio_state(String RadioName, String state)
   {
     String str = RadioName + " : " + state;
     Serial.println(str);
@@ -102,7 +103,7 @@ void displayInit()
  * @param RadioName - наименование радио
  * @param state - текущее состояние в виде строки STRING
  */
-void displayPrintState(int16_t x, int16_t y, String &RadioName, String state)
+void displayPrintState(int16_t x, int16_t y, String RadioName, String state)
 {
   String str = RadioName + " : " + state;
   display.setCursor(x, y);
@@ -133,8 +134,8 @@ void printStateResultTX(int &state, String &transmit_str)
   if (state == RADIOLIB_ERR_NONE) {
     //Выводим сообщение об успешной передаче
     #ifdef DEBUG_PRINT
-      print_to_terminal_radio_state(RADIO_NAME, F("SEND PACKET"));
-      print_to_terminal_radio_state(RADIO_NAME, F("TRANSMITT SUCCES!"));
+      print_to_terminal_radio_state(RADIO_NAME, "SEND PACKET");
+      print_to_terminal_radio_state(RADIO_NAME, "TRANSMITT SUCCES!");
     #endif
     displayPrintState(x, y, RADIO_NAME, transmit_str);
 
@@ -190,7 +191,7 @@ void printStateResult_RX(int &state, String &read_str)
   if (state == RADIOLIB_ERR_NONE) {
     //Выводим сообщение об успешном приёме
     #ifdef DEBUG_PRINT
-      print_to_terminal_radio_state(RADIO_NAME, F("RECEIVE PACKET"));
+      print_to_terminal_radio_state(RADIO_NAME, "RECEIVE PACKET");
     #endif
     displayPrintState(x, y, RADIO_NAME, read_str);
 
@@ -224,24 +225,24 @@ void printStateResult_RX(int &state, String &read_str)
 
 
 
-/**
-* @brief Функция отправляет данные, выводит на экран информацию об отправке,
-* выводит информацию об отправке в сериал-порт
-* 
-* @param transmit_str - строка для передачи
-*/
-void transmit_and_print_data(String &transmit_str)
-{
-  display.clearDisplay();
+// /**
+// * @brief Функция отправляет данные, выводит на экран информацию об отправке,
+// * выводит информацию об отправке в сериал-порт
+// * 
+// * @param transmit_str - строка для передачи
+// */
+// void transmit_and_print_data(String &transmit_str)
+// {
+//   display.clearDisplay();
 
-  //Посылаем пакет
-  state = radio.startTransmit(transmit_str);
-  //Ждём завершения передачи
-  WaitOnBusy();
-  //Печатаем данные куда надо (в сериал, если он активирован, и на дисплей)
-  printStateResultTX(state, transmit_str);
+//   //Посылаем пакет
+//   state = radio.startTransmit(transmit_str);
+//   //Ждём завершения передачи
+//   WaitOnBusy();
+//   //Печатаем данные куда надо (в сериал, если он активирован, и на дисплей)
+//   printStateResultTX(state, transmit_str);
   
-}
+// }
 
 
 
