@@ -390,7 +390,7 @@ void radio_setSettings(RADIO_CLASS_NAME radio, LORA_CONFIGURATION config_radio)
 
 void transmit_and_print_data(String &transmit_str)
 {
-  display.clearDisplay();
+  //display.clearDisplay();
 
   //Посылаем пакет
   state = radio.startTransmit(transmit_str);

@@ -86,8 +86,9 @@ void displayInit()
 
 
 
-
-
+static bool buttons_flag = false; //Флаг для відстеження натискання кнопок
+static int16_t old_button_string_length = 0; // Переменная для хранения длины предыдущего состояния вывода по нажатию кнопки
+static int16_t old_radio_string_length = 0; // Переменная для хранения длины предыдущего состояния вывода радио
 
 /**
  * @brief Функция для вывода на экран дисплея состояния
@@ -100,10 +101,35 @@ void displayInit()
  */
 void displayPrintState(int16_t x, int16_t y, String RadioName, String state)
 {
-  String str = RadioName + state;
-  display.setCursor(x, y);
-  display.print(str);
-  display.display();
+  String str = RadioName + state; //формируем строку для вывода на экран
+  //Если строка длиннее 20 символов, то обрезаем её
+  int16_t str_length = str.length();
+  if (str_length > 20)  str = str.substring(0, 20);
+
+  if(!buttons_flag) //Если флаг кнопок не установлен, то это значит, что мы выводим состояние радио
+  {
+    //Устанавливаем курсор на нужные координаты
+    display.setTextSize(1);                 // Normal 1:1 pixel scale
+    display.fillRect(0, 0, 128, 20, SSD1306_BLACK); // Очищаем область для текста с начала координат и до конца дисплея
+    display.setCursor(x, y);
+    display.print(str);
+    display.display();
+  }
+
+  //Если эта функция была вызвана для отрисовки вывода кнопок
+  #ifdef BUTTONS
+    if(buttons_flag)
+    {
+      display.fillRect(5, 15, 128, 20, SSD1306_BLACK); // Очищаем область для текста
+      display.display();
+      display.setCursor(x, y);
+      display.print(str);
+      display.display();
+      buttons_flag = false; //Сбрасываем флаг кнопок
+    }
+  #endif
+  
+  
 }
 
 

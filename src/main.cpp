@@ -36,6 +36,7 @@
 #include <Adafruit_SSD1306.h>
 #include <display.h>
 #include <Button2.h>
+#include <esp_task_wdt.h>
 
 #ifdef BUTTONS
   #define BUTTON_PIN_0  0   //Пін кнопки для управління
@@ -53,25 +54,49 @@
 
 uint64_t count = 0;           //Лічильник для відстеження кількості прийнятих пакетів
 
+
+
+
 #ifdef BUTTONS
+
   void pressed_button_0(Button2& btn) {
+    #ifdef DEBUG_PRINT
+      buttons_flag = true; //Встановлюємо флаг натискання кнопки
       Serial.println("pressed_button_0");
+      displayPrintState(5, 20, RADIO_NAME,"Button 0");
+    #endif
   }
 
   void pressed_button_32(Button2& btn) {
+    #ifdef DEBUG_PRINT
+      buttons_flag = true; //Встановлюємо флаг натискання кнопки
       Serial.println("pressed_button_32");
+      displayPrintState(5, 20, RADIO_NAME,"Button 32");
+    #endif
   }
 
   void pressed_button_33(Button2& btn) {
+    #ifdef DEBUG_PRINT
+      buttons_flag = true; //Встановлюємо флаг натискання кнопки
       Serial.println("pressed_button_33");
+      displayPrintState(5, 20, RADIO_NAME,"Button 33");
+    #endif
   }
 
   void pressed_button_34(Button2& btn) {
+    #ifdef DEBUG_PRINT
+      buttons_flag = true; //Встановлюємо флаг натискання кнопки
       Serial.println("pressed_button_34");
+      displayPrintState(5, 20, RADIO_NAME,"Button 34");
+    #endif
   }
 
   void pressed_button_35(Button2& btn) {
+    #ifdef DEBUG_PRINT
+      buttons_flag = true; //Встановлюємо флаг натискання кнопки
       Serial.println("pressed_button_35");
+      displayPrintState(5, 20, RADIO_NAME,"Button 35");
+    #endif
   }
 #endif
 
@@ -112,7 +137,20 @@ void printChipInfo() {
   #endif
 }
 
+
+
+
+
+
+
+
+
+
+
 void setup() {
+  esp_task_wdt_init(10, true); // таймаут 10 сек
+  esp_task_wdt_add(NULL);
+
   //Ініціалізуємо серійний порт для виводу інформації
   #ifdef DEBUG_PRINT
     Serial.begin(115200);
@@ -180,6 +218,7 @@ void setup() {
 
 
 void loop() {
+  esp_task_wdt_reset(); // Сброс таймера watchdog
 
   #ifdef BUTTONS
     button0.loop(); //Обробляємо натискання кнопки 0
