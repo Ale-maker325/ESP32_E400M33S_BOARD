@@ -45,7 +45,7 @@ extern Adafruit_SSD1306 display; // Replace 'DisplayClass' with the actual class
 void print_to_terminal_radio_state(String state, String RADIO_NAME);
 void displayPrintState(int16_t x, int16_t y, String RadioName, String state);
 void printStateResultTX(int &state, String &transmit_str);
-
+void printStateResult_RX(int &state, String &read_str);
 
 
 //************************************** Строки для формирования вывода информации ***************************************************** */
@@ -401,6 +401,23 @@ void transmit_and_print_data(String &transmit_str)
   
 }
 
+/**
+* @brief Функция отправляет данные, выводит на экран информацию об отправке,
+* выводит информацию об отправке в сериал-порт
+* 
+* @param transmit_str
+*/
+void receive_and_print_data(String &receive_str)
+{
+  display.clearDisplay();
+  state = radio.readData(receive_str);
+  //Ждём завершения передачи
+  WaitOnBusy();
+  //Печатаем данные куда надо (в сериал, если он активирован, и на дисплей)
+  printStateResult_RX(state, receive_str);
+  
+  
+}
 
 
 
@@ -409,71 +426,61 @@ void transmit_and_print_data(String &transmit_str)
 
 
 
+/**
+ * @brief Ініціалізація радіо-модуля та запуск прийому даних або передачі даних.
+ * Ця функція виконує ініціалізацію радіо-модуля, встановлює його налаштування та
+ * запускає прийом або передачу даних в залежності від того, чи визначено 
+ * макрос RECEIVER або TRANSMITTER.
+ * 
+ */
 void RadioStart()
 {
   #ifdef RECEIVER  //Якщо визначена робота модуля як приймача
 
-    //Устанавливаем функцию, которая будет вызываться при получении пакета данных
-    radio1.setPacketReceivedAction(setFlag_1);
-    #ifdef RADIO_2
-    radio2.setPacketReceivedAction(setFlag_2);
-    #endif
-
+    //Встановлюємо функцію, яка буде викликатись при отриманні пакета даних модемом
+    radio.setPacketReceivedAction(flag_operationDone);
+    
     #ifdef DEBUG_PRINT
-    //Начинаем слушать есть ли пакеты
-    Serial.print(TABLE_LEFT);
-    Serial.print(F("[SX1278] Starting to listen RX_1 "));
-    Serial.println(TABLE_RIGHT);
+      //Починаємо прийом даних
+      Serial.print(TABLE_LEFT);
+      Serial.print(F("STARTING RECEIVE PACKET"));
+      Serial.println(TABLE_RIGHT);
     #endif
 
-    state_1 = radio1.startReceive();
-    if (state_1 == RADIOLIB_ERR_NONE) {
+    //String str = F("START RECEIVE!");
+    //receive_and_print_data(RECEIVE);
+
+    state = radio.startReceive();
+
+    if (state == RADIOLIB_ERR_NONE) {
       #ifdef DEBUG_PRINT
-      Serial.println(F("success!"));
-      Serial.println(SPACE);
+        Serial.println(F("success!"));
+        Serial.println(SPACE);
       #endif
       digitalWrite(LED_PIN, LOW);     //Включаем светодиод, сигнализация об передаче/приёма пакета
     } else {
       #ifdef DEBUG_PRINT
-      Serial.print(F("failed, code: "));
-      Serial.println(state_1);
+        Serial.print(F("FAILED, code: "));
+        Serial.println(state);
       #endif
       while (true);
     }
 
-    #ifdef RADIO_2
-    #ifdef DEBUG_PRINT
-    //Начинаем слушать есть ли пакеты
-    Serial.print(TABLE_LEFT);
-    Serial.print(F("[SX1278] Starting to listen RX_2 "));
-    Serial.println(TABLE_RIGHT);
-    #endif
-
-    state_2 = radio2.startReceive();
-    if (state_2 == RADIOLIB_ERR_NONE) {
-      #ifdef DEBUG_PRINT
-      Serial.println(F("success!"));
-      Serial.println(SPACE);
-      #endif
-      digitalWrite(LED_PIN, LOW);     //Включаем светодиод, сигнализация об передаче/приёма пакета
-    } else {
-      #ifdef DEBUG_PRINT
-      Serial.print(F("failed, code: "));
-      Serial.println(state_2);
-      #endif
-      while (true);
-    }
-    #endif
-
-    String str;
+    String str = " ";
     receive_and_print_data(str);
+
+    digitalWrite(LED_PIN, LOW);     //Включаем светодиод, сигнализация об передаче/приёма пакета
+
+    #ifdef DEBUG_PRINT
+      delay(1000);
+    #endif
 
   #endif
 
 
   #ifdef TRANSMITTER  //Если определена работа модуля как передатчика
 
-    //Устанавливаем функцию, которая будет вызываться при отправке пакета данных модемом №1
+    //Устанавливаем функцию, которая будет вызываться при отправке пакета данных модемом
     radio.setPacketSentAction(flag_operationDone);
     
     #ifdef DEBUG_PRINT
@@ -501,13 +508,15 @@ void RadioStart()
 
   digitalWrite(LED_PIN, HIGH);      //Вимикаємо світлодіод, сигналізація про передачу/прийом пакета
 
-  //Если мощность усилителя передатчика больше 200 милливат (вы можете установить своё значение),
-  // и вентилятор охлаждения не включен, то включаем вентилятор охлаждения
-  if(config_radio.outputPower > 1)
-  {
-    //и включаем его
-    digitalWrite(FAN, HIGH);
-  }
+  #ifdef TRANSMITTER
+    //Если мощность усилителя передатчика больше 200 милливат (вы можете установить своё значение),
+    // и вентилятор охлаждения не включен, то включаем вентилятор охлаждения
+    if(config_radio.outputPower > 1)
+    {
+      //и включаем его
+      digitalWrite(FAN, HIGH);
+    }
+  #endif
 
 }
 

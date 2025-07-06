@@ -277,25 +277,6 @@ void printStateResult_RX(int &state, String &read_str)
 
 
 
-/**
-* @brief Функция отправляет данные, выводит на экран информацию об отправке,
-* выводит информацию об отправке в сериал-порт
-* 
-* @param transmit_str - строка для передачи
-*/
-void receive_and_print_data(String &receive_str)
-{
-  display.clearDisplay();
-  state = radio.readData(receive_str);
-  //Ждём завершения передачи
-  WaitOnBusy();
-  //Печатаем данные куда надо (в сериал, если он активирован, и на дисплей)
-  printStateResult_RX(state, receive_str);
-  
-}
-
-
-
 
 
 
