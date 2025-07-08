@@ -143,7 +143,6 @@ void displayPrintState(int16_t x, int16_t y, String RadioName, String state)
  * 
  * @param state         - текущее состояние, полученное от передатчика при его работе
  * @param transmit_str  - строка для передачи
- * @param radioNumber   - номер передатчика (так как их может быть два)
  */
 void printStateResultTX(int &state, String &transmit_str)
 {
@@ -195,12 +194,11 @@ void printStateResultTX(int &state, String &transmit_str)
 
 
 /**
- * @brief Функция, которая обеспечивает вывод текущего состояния 
- * приёмопередатчика в сериал-порт (если он задан) и на дисплей
+ * @brief Функція, яка забезпечує вивід поточного стану
+ * прийомопередавача у серіал порт (якщо він заданий) та на дисплей
  * 
- * @param state         - текущее состояние, полученное от передатчика при его работе
- * @param read_str  - строка для передачи
- * @param radioNumber   - номер передатчика (так как их может быть два)
+ * @param state     - текущий стан прийомопередавача, отриманий від приймача під час його роботи
+ * @param read_str  - строка для прийому даних
  */
 void printStateResult_RX(int &state, String &read_str)
 {
@@ -208,9 +206,8 @@ void printStateResult_RX(int &state, String &read_str)
   x = 5;
   y = 5;
   
-  //Если приём успешен, выводим сообщение в сериал-монитор
+  //Якщо прийом успішний, виводимо повідомлення в серіал-монітор
   if (state == RADIOLIB_ERR_NONE) {
-    //Выводим сообщение об успешном приёме
     #ifdef DEBUG_PRINT
       print_to_terminal_radio_state(RADIO_NAME, "RECEIVE PACKET");
     #endif
@@ -228,15 +225,23 @@ void printStateResult_RX(int &state, String &read_str)
           
   } else {
     //Если были проблемы при передаче, сообщаем об этом
+    if(state == RADIOLIB_ERR_LORA_HEADER_DAMAGED) {
+      // Якщо прийом не вдався, то це означає, що прийнятий пакет пошкоджений, або ми не отримали даних
+      #ifdef DEBUG_PRINT
+        Serial.println(F("RECEIVE BAD, NO DATA (-24)"));
+      #endif
+      displayPrintState(x, y, RADIO_NAME, F("NO DATA (-24)"));
+      return;
+    }else{
+      // Якщо були проблеми з прийомом, то виводимо повідомлення про помилку
+      #ifdef DEBUG_PRINT
+        String str = (String)state;
+        Serial.print(F("RECEIVE BAD, CODE: "));
+        print_to_terminal_radio_state(RADIO_NAME, str);
+        displayPrintState(x, y, RADIO_NAME, str);
+      #endif
+    }
     
-    String str = (String)state;
-    #ifdef DEBUG_PRINT
-      Serial.print(F("receive failed, "));
-      print_to_terminal_radio_state(RADIO_NAME, str);
-    #endif
-
-    displayPrintState(x, y, RADIO_NAME, str);
-  
   }
   
 }

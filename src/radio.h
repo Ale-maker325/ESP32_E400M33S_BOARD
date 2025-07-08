@@ -12,7 +12,7 @@
 
 
 
-int state = RADIOLIB_ERR_NONE; // Переменная, хранящая код состояния передачи/приёма
+static int state = RADIOLIB_ERR_NONE; // Переменная, хранящая код состояния передачи/приёма
 
 SPIClass SPI_MODEM;
 
@@ -36,8 +36,9 @@ SPIClass SPI_MODEM;
   //SX1268 radio = new Module(NSS_PIN, BUSY_PIN, NRST_PIN, DIO1_PIN); //Инициализируем экземпляр радио
 //#endif
 
-
-
+#ifdef RECEIVER
+  static String receive_str = " ";  // Строка для зберігання отриманих даних по радіо
+#endif
 
 // Add this declaration if 'display' is defined elsewhere (e.g., in display.h or another source file)
 extern Adafruit_SSD1306 display; // Replace 'DisplayClass' with the actual class type of 'display'
@@ -150,7 +151,7 @@ bool ICACHE_RAM_ATTR WaitOnBusy()
     uint32_t startTime = 0;
     #ifdef DEBUG_PRINT
       Serial.println("");
-      Serial.print(F("WaitOnBusy.....................  "));
+      Serial.print(F("*************************  WaitOnBusy  *************************"));
       Serial.println("");
     #endif
 
@@ -189,6 +190,14 @@ void printRadioBeginResult(int &STATE)
     #ifdef DEBUG_PRINT
       // Якщо ініціалізація пройшла успішно, виводимо повідомлення на термінал
       print_to_terminal_radio_state(RADIO_NAME, good);
+      #ifdef DEBUG_PRINT
+        Serial.print(TABLE_LEFT);
+        Serial.print(F("RADIO INIT SUCCESS"));
+        Serial.println(TABLE_RIGHT);
+        Serial.println(SPACE);
+        Serial.println(SPACE);
+        Serial.println(SPACE);
+      #endif
     #endif
       // Якщо ініціалізація пройшла успішно, виводимо повідомлення на дисплей
       displayPrintState(x, y, RADIO_NAME, good);
@@ -212,7 +221,8 @@ void printRadioBeginResult(int &STATE)
 */
 void ICACHE_RAM_ATTR selectRadio()
 {
-    digitalWrite(NSS_PIN, LOW);
+  pinMode(NSS_PIN, OUTPUT);
+  digitalWrite(NSS_PIN, LOW);
 }
 
 
@@ -223,8 +233,6 @@ void ICACHE_RAM_ATTR selectRadio()
  */
 void radioBeginAll()
 {
-  // Встановлюємо контакт NSS_PIN в HIGH, щоб не було конфліктів з іншими SPI-пристроями
-  pinMode(NSS_PIN, OUTPUT);
   selectRadio();
   
   #ifdef DEBUG_PRINT
@@ -409,9 +417,8 @@ void transmit_and_print_data(String &transmit_str)
 */
 void receive_and_print_data(String &receive_str)
 {
-  display.clearDisplay();
   state = radio.readData(receive_str);
-  //Ждём завершения передачи
+  //Зачекаємо, поки радіо не буде готове до роботи
   WaitOnBusy();
   //Печатаем данные куда надо (в сериал, если он активирован, и на дисплей)
   printStateResult_RX(state, receive_str);
@@ -445,29 +452,26 @@ void RadioStart()
       Serial.print(TABLE_LEFT);
       Serial.print(F("STARTING RECEIVE PACKET"));
       Serial.println(TABLE_RIGHT);
+      Serial.println(SPACE);
     #endif
-
-    //String str = F("START RECEIVE!");
-    //receive_and_print_data(RECEIVE);
 
     state = radio.startReceive();
 
     if (state == RADIOLIB_ERR_NONE) {
       #ifdef DEBUG_PRINT
-        Serial.println(F("success!"));
+        Serial.println(F("RADIO RECEIVE STARTED!"));
         Serial.println(SPACE);
       #endif
-      digitalWrite(LED_PIN, LOW);     //Включаем светодиод, сигнализация об передаче/приёма пакета
+      
     } else {
       #ifdef DEBUG_PRINT
-        Serial.print(F("FAILED, code: "));
+        Serial.print(F("FAILED START RECEIVE, CODE: "));
         Serial.println(state);
       #endif
       while (true);
     }
 
-    String str = " ";
-    receive_and_print_data(str);
+    receive_and_print_data(receive_str);
 
     digitalWrite(LED_PIN, LOW);     //Включаем светодиод, сигнализация об передаче/приёма пакета
 

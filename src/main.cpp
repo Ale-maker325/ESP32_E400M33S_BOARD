@@ -234,11 +234,11 @@ void radio_TX_loop()
 
 
 
-
+777;
 void radio_RX_loop()
 {
   #ifdef DEBUG_PRINT
-    Serial.println(F("[LR1110] Scanning channel for LoRa transmission ... "));
+    Serial.println(F("Scanning channel for LoRa transmission ... "));
   #endif
 
   // start scanning current channel
@@ -247,12 +247,12 @@ void radio_RX_loop()
   if (state == RADIOLIB_LORA_DETECTED) {
     // LoRa preamble was detected
     #ifdef DEBUG_PRINT
-      Serial.println(F("detected!"));
+      Serial.println(F("LoRa preamble was detected!"));
     #endif
   } else if (state == RADIOLIB_CHANNEL_FREE) {
     // no preamble was detected, channel is free
     #ifdef DEBUG_PRINT
-      Serial.println(F("channel is free!"));
+      Serial.println(F("No preamble was detected, channel is free!"));
     #endif
     } else {
     // some other error occurred
@@ -336,17 +336,17 @@ void setup() {
   //Ініціалізуємо радіо-модуль
   radioBeginAll();
   
-  #ifdef DEBUG_PRINT
-    Serial.print(TABLE_LEFT);
-    Serial.print(F("RADIO INIT SUCCESS"));
-    Serial.println(TABLE_RIGHT);
-    Serial.println(SPACE);
-  #endif
+  // #ifdef DEBUG_PRINT
+  //   Serial.print(TABLE_LEFT);
+  //   Serial.print(F("RADIO INIT SUCCESS"));
+  //   Serial.println(TABLE_RIGHT);
+  //   Serial.println(SPACE);
+  // #endif
 
-  #ifdef DEBUG_PRINT
-    Serial.println(SPACE);
-    Serial.println(SPACE);
-  #endif
+  // #ifdef DEBUG_PRINT
+  //   Serial.println(SPACE);
+  //   Serial.println(SPACE);
+  // #endif
 
   //Назначаем контакты для управлением вкл./выкл. усилителем передатчика
   radio.setRfSwitchPins(RX_EN_PIN, TX_EN_PIN);
@@ -465,7 +465,7 @@ void loop() {
     Serial << "таймер 1 - остановлен" << endl;
     Serial << "таймер 0 - запущен" << endl;
     Serial << " " << endl;
-    radio_RX_loop();
+    //radio_RX_loop();
     flagTimer_1 = false;
 
   }
@@ -486,7 +486,7 @@ void loop() {
       String str = "#" + String(count++);
       radio_RX_loop();
       receive_and_print_data(str);
-      
+      1111
       
     }
 
