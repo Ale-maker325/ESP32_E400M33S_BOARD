@@ -278,7 +278,7 @@ void radio_setSettings(RADIO_CLASS_NAME radio, LORA_CONFIGURATION config_radio)
       Serial.println(F("Selected frequency is invalid for this module!"));
       display.clearDisplay();
       displayPrintState(5, 5, RADIO_NAME, F("ERROR FREQ"));
-      displayPrintState(5, 20, RADIO_NAME, F("Selected frequency is invalid for this module!"));
+      //displayPrintState(5, 20, RADIO_NAME, F("Selected frequency is invalid for this module!"));
     #endif
     while (true);
   }
@@ -294,7 +294,7 @@ void radio_setSettings(RADIO_CLASS_NAME radio, LORA_CONFIGURATION config_radio)
       Serial.println(F("Selected bandwidth is invalid for this module!"));
       display.clearDisplay();
       displayPrintState(5, 5, RADIO_NAME, F("ERROR BADWIDTH"));
-      displayPrintState(5, 20, RADIO_NAME, F("Selected bandwidth is invalid for this module!"));
+      //displayPrintState(5, 20, RADIO_NAME, F("Selected bandwidth is invalid for this module!"));
     #endif
     while (true);
   }
@@ -309,7 +309,7 @@ void radio_setSettings(RADIO_CLASS_NAME radio, LORA_CONFIGURATION config_radio)
       Serial.println(F("Selected spreading factor is invalid for this module!"));
       display.clearDisplay();
       displayPrintState(5, 5, RADIO_NAME, F("ERROR SF"));
-      displayPrintState(5, 20, RADIO_NAME, F("Selected spreading factor is invalid for this module!"));
+      //displayPrintState(5, 20, RADIO_NAME, F("Selected spreading factor is invalid for this module!"));
     #endif
     while (true);
   }
@@ -324,7 +324,7 @@ void radio_setSettings(RADIO_CLASS_NAME radio, LORA_CONFIGURATION config_radio)
       Serial.println(F("Selected coding rate is invalid for this module!"));
       display.clearDisplay();
       displayPrintState(5, 5, RADIO_NAME, F("ERROR CR"));
-      displayPrintState(5, 20, RADIO_NAME, F("Selected coding rate is invalid for this module!"));
+      //displayPrintState(5, 20, RADIO_NAME, F("Selected coding rate is invalid for this module!"));
     #endif
     while (true);
   }
@@ -339,7 +339,7 @@ void radio_setSettings(RADIO_CLASS_NAME radio, LORA_CONFIGURATION config_radio)
       Serial.println(F("Unable to set sync word!"));
       display.clearDisplay();
       displayPrintState(5, 5, RADIO_NAME, F("ERROR SYNC"));
-      displayPrintState(5, 20, RADIO_NAME, F("Unable to set sync word!"));
+      //displayPrintState(5, 20, RADIO_NAME, F("Unable to set sync word!"));
     #endif
     while (true);
   }
@@ -354,7 +354,7 @@ void radio_setSettings(RADIO_CLASS_NAME radio, LORA_CONFIGURATION config_radio)
       Serial.println(F("Selected output power is invalid for this module!"));
       display.clearDisplay();
       displayPrintState(5, 5, RADIO_NAME, F("ERROR POWER"));
-      displayPrintState(5, 20, RADIO_NAME, F("Selected output power is invalid for this module!"));
+      //displayPrintState(5, 20, RADIO_NAME, F("Selected output power is invalid for this module!"));
     #endif
     while (true);
   }
@@ -369,7 +369,7 @@ void radio_setSettings(RADIO_CLASS_NAME radio, LORA_CONFIGURATION config_radio)
       Serial.println(F("Selected preamble length is invalid for this module!"));
       display.clearDisplay();
       displayPrintState(5, 5, RADIO_NAME, F("ERROR PREAMBLE"));
-      displayPrintState(5, 20, RADIO_NAME, F("Selected preamble length is invalid for this module!"));
+      //displayPrintState(5, 20, RADIO_NAME, F("Selected preamble length is invalid for this module!"));
     #endif
     while (true);
   }
