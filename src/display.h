@@ -39,6 +39,11 @@ void displayInit()
     for(;;); // Якщо дисплей не ініціалізувався, то зацикливаемся
   }
 
+  #ifdef DEBUG_PRINT
+    Serial.println(F("DISPLAY INIT SUCCESS!"));
+    Serial.println("");
+  #endif
+
   //Очищуємо буфер дисплея
   display.clearDisplay();
 
@@ -76,7 +81,7 @@ void displayInit()
    */
   void print_to_terminal_radio_state(String RadioName, String state)
   {
-    String str = RadioName + state;
+    String str = RadioName + "RECEIVED DATA " + state;
     Serial.println(str);
   }
 
@@ -110,7 +115,8 @@ void displayPrintState(int16_t x, int16_t y, String RadioName, String state)
   {
     //Устанавливаем курсор на нужные координаты
     display.setTextSize(1);                 // Normal 1:1 pixel scale
-    display.fillRect(0, 0, 128, 20, SSD1306_BLACK); // Очищаем область для текста с начала координат и до конца дисплея
+    display.fillRect(x, y, 128, 10, SSD1306_BLACK); // Очищаем область для текста с начала координат и до конца дисплея
+    //display.display();
     display.setCursor(x, y);
     display.print(str);
     display.display();
@@ -120,7 +126,7 @@ void displayPrintState(int16_t x, int16_t y, String RadioName, String state)
   #ifdef BUTTONS
     if(buttons_flag)
     {
-      display.fillRect(5, 15, 128, 20, SSD1306_BLACK); // Очищаем область для текста
+      display.fillRect(x, y, 128, 10, SSD1306_BLACK); // Очищаем область для текста
       display.display();
       display.setCursor(x, y);
       display.print(str);
@@ -202,48 +208,60 @@ void printStateResultTX(int &state, String &transmit_str)
  */
 void printStateResult_RX(int &state, String &read_str)
 {
-  int x, y;
-  x = 5;
-  y = 5;
-  
+  String error_str;
+
   //Якщо прийом успішний, виводимо повідомлення в серіал-монітор
   if (state == RADIOLIB_ERR_NONE) {
     #ifdef DEBUG_PRINT
-      print_to_terminal_radio_state(RADIO_NAME, "RECEIVE PACKET");
-    #endif
-    displayPrintState(x, y, RADIO_NAME, read_str);
+      print_to_terminal_radio_state(RADIO_NAME, read_str);
+      // print RSSI (Received Signal Strength Indicator)
+      Serial.print(F(" RSSI:\t\t"));
+      Serial.print(radio.getRSSI());
+      Serial.println(F(" dBm"));
 
-    #ifdef DEBUG_PRINT              
-      //Выводим в сериал данные отправленного пакета
-      Serial.print(F("Data:\t\t"));
-      Serial.println(read_str);
+      // print SNR (Signal-to-Noise Ratio)
+      Serial.print(F(" SNR:\t\t"));
+      Serial.print(radio.getSNR());
+      Serial.println(F(" dB"));
+
+      // print frequency error
+      Serial.print(F(" FREQ ERR:\t"));
+      Serial.print(radio.getFrequencyError());
+      Serial.println(F(" Hz"));
+
     #endif
+    //Выводим сообщение об успішному прийомі
+    displayPrintState(5, 5, RADIO_NAME, read_str);
+    displayPrintState(5, 20, F("RSSI: "), String(radio.getRSSI()) + " dBm");
+    displayPrintState(5, 30, F("SNR: "), String(radio.getSNR()) + " dB");
+    displayPrintState(5, 40, F("FREQ ERR: "), String(radio.getFrequencyError()) + " Hz");
+
+    // #ifdef DEBUG_PRINT              
+    //   //Выводим в сериал данные отправленного пакета
+    //   Serial.print(F("RECEIVE DATA:\t\t"));
+    //   Serial.println(read_str);
+    // #endif
 
     digitalWrite(LED_PIN, LOW);     //Включаем светодиод, сигнализация об передаче/приёма пакета
-
-    
-          
-  } else {
-    //Если были проблемы при передаче, сообщаем об этом
-    if(state == RADIOLIB_ERR_LORA_HEADER_DAMAGED) {
-      // Якщо прийом не вдався, то це означає, що прийнятий пакет пошкоджений, або ми не отримали даних
-      #ifdef DEBUG_PRINT
-        Serial.println(F("RECEIVE BAD, NO DATA (-24)"));
-      #endif
-      displayPrintState(x, y, RADIO_NAME, F("NO DATA (-24)"));
-      return;
-    }else{
-      // Якщо були проблеми з прийомом, то виводимо повідомлення про помилку
-      #ifdef DEBUG_PRINT
-        String str = (String)state;
-        Serial.print(F("RECEIVE BAD, CODE: "));
-        print_to_terminal_radio_state(RADIO_NAME, str);
-        displayPrintState(x, y, RADIO_NAME, str);
-      #endif
-    }
-    
-  }
   
+  } else if(state == RADIOLIB_ERR_LORA_HEADER_DAMAGED) {
+    
+    // Якщо прийом не вдався, то це означає, що прийнятий пакет пошкоджений, або ми не отримали даних
+    #ifdef DEBUG_PRINT
+      Serial.println(F("RECEIVE BAD, NO DATA (-24)"));
+    #endif
+    displayPrintState(5, 5, RADIO_NAME, F("NO DATA (-24)"));
+    //return;
+    
+  }else{
+    String error_str = "ERROR:(" + (String)state + ")";
+    #ifdef DEBUG_PRINT
+      // packet was received, but is malformed
+      Serial.println(error_str);
+    #endif
+    displayPrintState(5, 5, RADIO_NAME, error_str);
+    //return;
+  }
 }
 
 

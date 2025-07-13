@@ -398,8 +398,6 @@ void radio_setSettings(RADIO_CLASS_NAME radio, LORA_CONFIGURATION config_radio)
 
 void transmit_and_print_data(String &transmit_str)
 {
-  //display.clearDisplay();
-
   //Посылаем пакет
   state = radio.startTransmit(transmit_str);
   //Ждём завершения передачи
@@ -409,24 +407,107 @@ void transmit_and_print_data(String &transmit_str)
   
 }
 
+
+
+
+
 /**
-* @brief Функция отправляет данные, выводит на экран информацию об отправке,
-* выводит информацию об отправке в сериал-порт
+* @brief Функция берёт данные, которые были получены по вызову метода startReceive(), 
+* выводит на экран информацию об отправке, выводит информацию об отправке в сериал-порт
 * 
 * @param transmit_str
 */
 void receive_and_print_data(String &receive_str)
 {
-  state = radio.readData(receive_str);
-  //Зачекаємо, поки радіо не буде готове до роботи
-  WaitOnBusy();
+  //Читаем данные, которые были получены по вызову метода startReceive() 
+  int state_read = radio.readData(receive_str);
+  // you can also read received data as byte array
+  /*
+  byte byteArr[8];
+  int numBytes = radio.getPacketLength();
+  int state = radio.readData(byteArr, numBytes);
+  */
+  
   //Печатаем данные куда надо (в сериал, если он активирован, и на дисплей)
-  printStateResult_RX(state, receive_str);
-  
-  
+  printStateResult_RX(state_read, receive_str);
 }
 
 
+
+// /**
+//  * @brief Функція для сканування каналу на наявність LoRa-передачі.
+//  * Ця функція викликає метод scanChannel() радіо-модуля, який перевіряє, чи є LoRa-пакет на поточному каналі.
+//  * Якщо LoRa-пакет виявлено, то виводиться відповідне повідомлення.
+//  * Якщо канал вільний, то також виводиться повідомлення про це.
+//  * Якщо сталася помилка, то виводиться код помилки.
+//  */
+// void radio_scan_channel()
+// {
+//   int x=5;
+//   int y=35;
+
+//   #ifdef DEBUG_PRINT
+//     Serial.println(F("Scanning channel for LoRa transmission ... "));
+//   #endif
+
+//   // start scanning current channel
+//   int state_scanChannel = radio.scanChannel();
+
+//   if (state_scanChannel == RADIOLIB_LORA_DETECTED) {
+//     String str_scan_lora_channel = F("DETECTED!");
+//     // LoRa preamble was detected
+//     #ifdef DEBUG_PRINT
+//       Serial.println(str_scan_lora_channel);
+//     #endif
+//     displayPrintState(x, y, RADIO_NAME, str_scan_lora_channel);
+
+//   } else if (state_scanChannel == RADIOLIB_CHANNEL_FREE) {
+//     String str_scan_lora_channel = F("NOT DETECTED!");
+//     // no preamble was detected, channel is free
+//     #ifdef DEBUG_PRINT
+//       Serial.println(F("No preamble was detected, channel is free!"));
+//     #endif
+//     displayPrintState(x, y, RADIO_NAME, str_scan_lora_channel);
+
+
+//   } 
+  
+//   // else if (state_scanChannel == RADIOLIB_ERR_NONE) {
+//   //   String str_scan_lora_channel = F("LoRa ERROR!");
+//   //   // some other error occurred
+//   //   #ifdef DEBUG_PRINT
+//   //     Serial.print(F("failed, code "));
+//   //     Serial.println(state);
+//   //   #endif
+//   //   displayPrintState(x, y, RADIO_NAME, str_scan_lora_channel);
+//   // }
+
+
+//   // // check CAD result
+//     // int state_scanChannel = radio1.getChannelScanResult();
+
+//     // if (state_scanChannel == RADIOLIB_LORA_DETECTED) {
+//     //   // LoRa packet was detected
+//     //   #ifdef DEBUG_PRINT
+//     //   Serial.println(F("[LR1110] Packet detected!"));
+//     //   #endif
+
+//     // } else if (state_scanChannel == RADIOLIB_CHANNEL_FREE) {
+//     //   // channel is free
+//     //   #ifdef DEBUG_PRINT
+//     //   Serial.println(F("[LR1110] Channel is free!"));
+//     //   #endif
+
+//     // } else {
+//     //   // some other error occurred
+//     //   #ifdef DEBUG_PRINT
+//     //   Serial.print(F("[LR1110] Failed, code "));
+//     //   Serial.println(state);
+//     //   #endif
+
+//     // }
+
+// }
 
 
 
@@ -456,18 +537,33 @@ void RadioStart()
     #endif
 
     state = radio.startReceive();
+    // if needed, 'listen' mode can be disabled by calling
+    // any of the following methods:
+    //
+    // radio.standby()
+    // radio.sleep()
+    // radio.transmit();
+    // radio.receive();
+    // radio.scanChannel();
 
     if (state == RADIOLIB_ERR_NONE) {
+      String state_str = F("RECEIVE STARTED!");
       #ifdef DEBUG_PRINT
-        Serial.println(F("RADIO RECEIVE STARTED!"));
+        Serial.println(state_str);
         Serial.println(SPACE);
+      #endif
+      printStateResult_RX(state, state_str);
+      #ifdef DEBUG_PRINT
+        delay(500);
       #endif
       
     } else {
+      String state_str = F("FAILED RECEIVE, CODE: ");
       #ifdef DEBUG_PRINT
-        Serial.print(F("FAILED START RECEIVE, CODE: "));
+        Serial.print(state_str);
         Serial.println(state);
       #endif
+      printStateResult_RX(state, state_str);
       while (true);
     }
 
@@ -476,7 +572,7 @@ void RadioStart()
     digitalWrite(LED_PIN, LOW);     //Включаем светодиод, сигнализация об передаче/приёма пакета
 
     #ifdef DEBUG_PRINT
-      delay(1000);
+      delay(500);
     #endif
 
   #endif

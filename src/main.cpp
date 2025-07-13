@@ -61,7 +61,7 @@
 
 
 uint64_t count = 0;           //Лічильник для відстеження кількості прийнятих пакетів
-
+String str_read_data = "";    //Создаём пустую строку для приёма данных
 
 
 
@@ -130,44 +130,47 @@ void IRAM_ATTR timer_1()
 
 #ifdef BUTTONS
 
+  int button_x = 5; //Початкове значення координати X для виводу інформації на дисплей
+  int button_y = 55; //Початкове значення координати Y для виводу інформації на дисплей
+
   void pressed_button_0(Button2& btn) {
     #ifdef DEBUG_PRINT
       buttons_flag = true; //Встановлюємо флаг натискання кнопки
       Serial.println("pressed_button_0");
-      displayPrintState(5, 20, RADIO_NAME,"Button 0");
     #endif
+    displayPrintState(button_x, button_y, RADIO_NAME,"Button 0");
   }
 
   void pressed_button_32(Button2& btn) {
     #ifdef DEBUG_PRINT
       buttons_flag = true; //Встановлюємо флаг натискання кнопки
       Serial.println("pressed_button_32");
-      displayPrintState(5, 20, RADIO_NAME,"Button 32");
     #endif
+    displayPrintState(button_x, button_y, RADIO_NAME,"Button 32");
   }
 
   void pressed_button_33(Button2& btn) {
     #ifdef DEBUG_PRINT
       buttons_flag = true; //Встановлюємо флаг натискання кнопки
       Serial.println("pressed_button_33");
-      displayPrintState(5, 20, RADIO_NAME,"Button 33");
     #endif
+    displayPrintState(button_x, button_y, RADIO_NAME,"Button 33");
   }
 
   void pressed_button_34(Button2& btn) {
     #ifdef DEBUG_PRINT
       buttons_flag = true; //Встановлюємо флаг натискання кнопки
       Serial.println("pressed_button_34");
-      displayPrintState(5, 20, RADIO_NAME,"Button 34");
     #endif
+    displayPrintState(button_x, button_y, RADIO_NAME,"Button 34");
   }
 
   void pressed_button_35(Button2& btn) {
     #ifdef DEBUG_PRINT
       buttons_flag = true; //Встановлюємо флаг натискання кнопки
       Serial.println("pressed_button_35");
-      displayPrintState(5, 20, RADIO_NAME,"Button 35");
     #endif
+    displayPrintState(button_x, button_y, RADIO_NAME,"Button 35");
   }
 #endif
 
@@ -232,69 +235,13 @@ void radio_TX_loop()
 
 
 
-
-
-777;
-void radio_RX_loop()
-{
-  #ifdef DEBUG_PRINT
-    Serial.println(F("Scanning channel for LoRa transmission ... "));
-  #endif
-
-  // start scanning current channel
-  state = radio.scanChannel();
-
-  if (state == RADIOLIB_LORA_DETECTED) {
-    // LoRa preamble was detected
-    #ifdef DEBUG_PRINT
-      Serial.println(F("LoRa preamble was detected!"));
-    #endif
-  } else if (state == RADIOLIB_CHANNEL_FREE) {
-    // no preamble was detected, channel is free
-    #ifdef DEBUG_PRINT
-      Serial.println(F("No preamble was detected, channel is free!"));
-    #endif
-    } else {
-    // some other error occurred
-    #ifdef DEBUG_PRINT
-      Serial.print(F("failed, code "));
-      Serial.println(state);
-    #endif
-
-  }
-  // // check CAD result
-    // int state = radio1.getChannelScanResult();
-
-    // if (state == RADIOLIB_LORA_DETECTED) {
-    //   // LoRa packet was detected
-    //   #ifdef DEBUG_PRINT
-    //   Serial.println(F("[LR1110] Packet detected!"));
-    //   #endif
-
-    // } else if (state == RADIOLIB_CHANNEL_FREE) {
-    //   // channel is free
-    //   #ifdef DEBUG_PRINT
-    //   Serial.println(F("[LR1110] Channel is free!"));
-    //   #endif
-
-    // } else {
-    //   // some other error occurred
-    //   #ifdef DEBUG_PRINT
-    //   Serial.print(F("[LR1110] Failed, code "));
-    //   Serial.println(state);
-    //   #endif
-
-    // }
-
-}
-
-
-
-
-
-
-
-
+// void button_print_state()
+// {
+//   Serial.print("button 34 state: ");
+//   Serial.println(digitalRead(BUTTON_PIN_34));
+//   Serial.print("button 35 state: ");
+//   Serial.println(digitalRead(BUTTON_PIN_35));
+// }
 
 
 
@@ -311,6 +258,7 @@ void setup() {
     Serial.begin(115200);
   #endif
 
+    
   //Ініціалізуємо шину I2C для роботи з дисплеєм
   display_wire.begin(I2C_SDA_PIN, I2C_SCL_PIN, 100000);
   //Ініціалізуємо SPI для роботи з радіо-модулем
@@ -323,11 +271,6 @@ void setup() {
   //Ініціалізуємо дисплей
   displayInit();
 
-  #ifdef DEBUG_PRINT
-    Serial.println(F("DISPLAY INIT SUCCESS!"));
-    Serial.println("");
-  #endif
-  
   pinMode(LED_PIN, OUTPUT);      //Контакт управління світлодіодом налаштовуємо як вихідний
   pinMode(FAN, OUTPUT);          //Контакт управління вентилятором налаштовуємо як вихідний
   
@@ -336,18 +279,6 @@ void setup() {
   //Ініціалізуємо радіо-модуль
   radioBeginAll();
   
-  // #ifdef DEBUG_PRINT
-  //   Serial.print(TABLE_LEFT);
-  //   Serial.print(F("RADIO INIT SUCCESS"));
-  //   Serial.println(TABLE_RIGHT);
-  //   Serial.println(SPACE);
-  // #endif
-
-  // #ifdef DEBUG_PRINT
-  //   Serial.println(SPACE);
-  //   Serial.println(SPACE);
-  // #endif
-
   //Назначаем контакты для управлением вкл./выкл. усилителем передатчика
   radio.setRfSwitchPins(RX_EN_PIN, TX_EN_PIN);
     
@@ -361,62 +292,72 @@ void setup() {
   #endif
 
   #ifdef BUTTONS
+    
+    // pinMode(BUTTON_PIN_34, INPUT); //Підтягуємо кнопку 34 до HIGH
+    // pinMode(BUTTON_PIN_35, INPUT); //Підтягуємо кнопку 35 до HIGH
+  
     button0.setPressedHandler(pressed_button_0); //Встановлюємо обробник натискання кнопки 0
     button32.setPressedHandler(pressed_button_32); //Встановлюємо обробник натискання кнопки 32
     button33.setPressedHandler(pressed_button_33); //Встановлюємо обробник натискання кнопки 33
     button34.setPressedHandler(pressed_button_34); //Встановлюємо обробник натискання кнопки 34
     button35.setPressedHandler(pressed_button_35); //Встановлюємо обробник натискання кнопки 35
+
+    
   #endif
 
 
-  /**
-   * @brief инициализируем таймер с помощью функции timerbegin , эта функция получает номер таймера, который
-   * мы хотим использовать (от 0 до 3, так как у нас есть 4 аппаратных таймера), значение предварительного
-   * делителя и флаг, указывающий, должен ли счетчик считать вверх (истина) или вниз (ложь). счетчик считает,
-   * что частота базового сигнала, используемого счетчиками ESP32, составляет 80 МГц . Если мы разделим это
-   * значение на 80 (используя 80 в качестве значение прескалера), мы получим сигнал с частотой 1 МГц, который
-   * будет увеличивать счетчик таймера на 1 000 000 раз в секунду.
-   * Таким образом, таймер 0 будет считать с частотой 1 МГц. Поскольку наша частота составляет 1 МГц, мы знаем,
-   * что таймер будет считать 1 000 000 значений за 1 секунду.
-   * ДЛя того, чтобы остановить таймер, необходимо вызвать "void timerEnd(hw_timer_t *timer);" Также для старта и
-   * остановки таймера есть функции: "void timerStart(hw_timer_t *timer);", "void timerStop(hw_timer_t *timer);", а
-   * для рестарта таймера есть функция "void timerRestart(hw_timer_t *timer);"
-  */
-  myTIMER_0 = timerBegin(0, 80, true); // timer 0, MWDT clock period = 12.5 ns * TIMGn_Tx_WDT_CLK_PRESCALE -> 12.5 ns * 80 -> 1000 ns = 1 us, countUp
-  myTIMER_1 = timerBegin(1, 80, true);
-  /**
-   * @brief Прежде чем включать таймер, нам нужно привязать его к функции обработки, которая будет выполняться при
-   * генерации прерывания. Это делается вызовом функции timerAttachInterrupt. Для того, чтобы отключить функцию 
-   * обработки прерывания от таймера, необходимо вызвать функцию "void timerDetachInterrupt(hw_timer_t *timer);"
-  */
-  timerAttachInterrupt(myTIMER_0, &timer_0, true);
-  timerAttachInterrupt(myTIMER_1, &timer_1, true);
-  /**
-   * @brief timerAlarmWrite , чтобы указать значение счетчика, при котором сгенерировано прерывание таймера. Мы предполагаем,
-   * что хотим генерировать прерывание каждые 2 секунды, и поэтому мы передаем значение 2 000 000 микросекунд, что равно
-   * 2 секундам. Третий аргумент мы будем передавать true , поэтому счетчик будет перезагружаться и, таким образом, будет 
-   * периодически генерироваться прерывание.
-   * Поскольку наша частота составляет 1 МГц, мы знаем, что таймер будет считать 1 000 000 значений за 1 секунду.
-   * 
-  */
-  timerAlarmWrite(myTIMER_0, periodTimera_0, true);
-  timerAlarmWrite(myTIMER_1, periodTimera_1, true);
-  
+  #ifdef TRANSMITTER
+    /**
+     * @brief инициализируем таймер с помощью функции timerbegin , эта функция получает номер таймера, который
+     * мы хотим использовать (от 0 до 3, так как у нас есть 4 аппаратных таймера), значение предварительного
+     * делителя и флаг, указывающий, должен ли счетчик считать вверх (истина) или вниз (ложь). счетчик считает,
+     * что частота базового сигнала, используемого счетчиками ESP32, составляет 80 МГц . Если мы разделим это
+     * значение на 80 (используя 80 в качестве значение прескалера), мы получим сигнал с частотой 1 МГц, который
+     * будет увеличивать счетчик таймера на 1 000 000 раз в секунду.
+     * Таким образом, таймер 0 будет считать с частотой 1 МГц. Поскольку наша частота составляет 1 МГц, мы знаем,
+     * что таймер будет считать 1 000 000 значений за 1 секунду.
+     * ДЛя того, чтобы остановить таймер, необходимо вызвать "void timerEnd(hw_timer_t *timer);" Также для старта и
+     * остановки таймера есть функции: "void timerStart(hw_timer_t *timer);", "void timerStop(hw_timer_t *timer);", а
+     * для рестарта таймера есть функция "void timerRestart(hw_timer_t *timer);"
+    */
+    myTIMER_0 = timerBegin(0, 80, true); // timer 0, MWDT clock period = 12.5 ns * TIMGn_Tx_WDT_CLK_PRESCALE -> 12.5 ns * 80 -> 1000 ns = 1 us, countUp
+    myTIMER_1 = timerBegin(1, 80, true);
+    /**
+     * @brief Прежде чем включать таймер, нам нужно привязать его к функции обработки, которая будет выполняться при
+     * генерации прерывания. Это делается вызовом функции timerAttachInterrupt. Для того, чтобы отключить функцию 
+     * обработки прерывания от таймера, необходимо вызвать функцию "void timerDetachInterrupt(hw_timer_t *timer);"
+    */
+    timerAttachInterrupt(myTIMER_0, &timer_0, true);
+    timerAttachInterrupt(myTIMER_1, &timer_1, true);
+    /**
+     * @brief timerAlarmWrite , чтобы указать значение счетчика, при котором сгенерировано прерывание таймера. Мы предполагаем,
+     * что хотим генерировать прерывание каждые 2 секунды, и поэтому мы передаем значение 2 000 000 микросекунд, что равно
+     * 2 секундам. Третий аргумент мы будем передавать true , поэтому счетчик будет перезагружаться и, таким образом, будет 
+     * периодически генерироваться прерывание.
+     * Поскольку наша частота составляет 1 МГц, мы знаем, что таймер будет считать 1 000 000 значений за 1 секунду.
+     * 
+    */
+    timerAlarmWrite(myTIMER_0, periodTimera_0, true);
+    timerAlarmWrite(myTIMER_1, periodTimera_1, true);
+    
 
-   
-  /**
-   * @brief Чтобы завершить функцию настройки, вызовем функцию timerAlarmEnable(timer);
-   * Эта функция используется для включения генерации тревожных событий таймера. Для того,
-   * чтобы отключить эту функцию, необходимо вызвать "void timerAlarmDisable(hw_timer_t *timer);"
-   * 
-   */
-  timerAlarmEnable(myTIMER_0);
-  timerAlarmEnable(myTIMER_1);
+    
+    /**
+     * @brief Чтобы завершить функцию настройки, вызовем функцию timerAlarmEnable(timer);
+     * Эта функция используется для включения генерации тревожных событий таймера. Для того,
+     * чтобы отключить эту функцию, необходимо вызвать "void timerAlarmDisable(hw_timer_t *timer);"
+     * 
+     */
+    timerAlarmEnable(myTIMER_0);
+    timerAlarmEnable(myTIMER_1);
 
-  if(timerStarted(myTIMER_0)) Serial << "Таймер 1 запущен......" << endl;
-  if(timerStarted(myTIMER_1)) Serial << "Таймер 2 запущен......" << endl;
-
+    if(timerStarted(myTIMER_0)) Serial << "Таймер 1 запущен......" << endl;
+    if(timerStarted(myTIMER_1)) Serial << "Таймер 2 запущен......" << endl;
+  #endif
 }
+
+
+
 
  
 
@@ -432,62 +373,59 @@ void loop() {
     button33.loop(); //Обробляємо натискання кнопки 33
     button34.loop(); //Обробляємо натискання кнопки 34
     button35.loop(); //Обробляємо натискання кнопки 35
+
   #endif
 
   digitalWrite(LED_PIN, HIGH); //Выключаем светодиод, сигнализация об окончании передачи/приёма пакета
 
-  /**
-   * @brief Основной цикл будет там, где мы фактически обрабатываем прерывание таймера после того,
-   * как об этом сигнализирует ISR (процедура обслуживания прерываний, также называемая обработчиком
-   * прерываний) . Чтобы проверить значение счетчика прерываний, мы проверим, является липеременная
-   * счетчика прерываний больше нуля, и если это так, мы введем код обработки прерывания. Там первое,
-   * что мы сделаем, это уменьшим этот счетчик, сигнализируя, что прерывание было подтверждено и будет обработано.
-  */
-  if(flagTimer_0)
-  {
-    Serial << " " << endl;
-    Serial << "Сработал таймер 0 .............................." << endl;
-    Serial << "таймер 0 - остановлен" << endl;
-    Serial << "таймер 1 - запущен" << endl;
-    Serial << " " << endl;
-    radio_TX_loop();
-    flagTimer_0 = false;
-    timerAlarmEnable(myTIMER_1);
-  
-  }
-  if(flagTimer_1)
-  {
-    //timerStop(myTIMER_1);
-    //timerDetachInterrupt(myTIMER_1);
-    timerAlarmDisable(myTIMER_1);
-    Serial << " " << endl;
-    Serial << "Сработал таймер 1 .............................." << endl;
-    Serial << "таймер 1 - остановлен" << endl;
-    Serial << "таймер 0 - запущен" << endl;
-    Serial << " " << endl;
-    //radio_RX_loop();
-    flagTimer_1 = false;
+  #ifdef TRANSMITTER
+    /**
+     * @brief Основной цикл будет там, где мы фактически обрабатываем прерывание таймера после того,
+     * как об этом сигнализирует ISR (процедура обслуживания прерываний, также называемая обработчиком
+     * прерываний) . Чтобы проверить значение счетчика прерываний, мы проверим, является липеременная
+     * счетчика прерываний больше нуля, и если это так, мы введем код обработки прерывания. Там первое,
+     * что мы сделаем, это уменьшим этот счетчик, сигнализируя, что прерывание было подтверждено и будет обработано.
+    */
+    if(flagTimer_0)
+    {
+      Serial << " " << endl;
+      Serial << "Сработал таймер 0 .............................." << endl;
+      Serial << "таймер 0 - остановлен" << endl;
+      Serial << "таймер 1 - запущен" << endl;
+      Serial << " " << endl;
+      radio_TX_loop();
+      flagTimer_0 = false;
+      timerAlarmEnable(myTIMER_1);
+    
+    }
+    if(flagTimer_1)
+    {
+      //timerStop(myTIMER_1);
+      //timerDetachInterrupt(myTIMER_1);
+      timerAlarmDisable(myTIMER_1);
+      Serial << " " << endl;
+      Serial << "Сработал таймер 1 .............................." << endl;
+      Serial << "таймер 1 - остановлен" << endl;
+      Serial << "таймер 0 - запущен" << endl;
+      Serial << " " << endl;
+      flagTimer_1 = false;
 
-  }
-
+    }
+  #endif
    
    
   #ifdef RECEIVER   //Если определен модуль как приёмник
     //проверяем, была ли предыдущая передача успешной
     #ifdef DEBUG_PRINT
-    Serial.println("..................................................");
+      Serial.println("..............................................................");
     #endif
+
+    //radio_scan_channel(); //Сканируем канал на наличие LoRa передачи
+
     if(operationDone) {
-      
       //Сбрасываем сработавший флаг прерывания
       operationDone = false;
-
-      //готовим строку для отправки
-      String str = "#" + String(count++);
-      radio_RX_loop();
-      receive_and_print_data(str);
-      1111
-      
+      receive_and_print_data(str_read_data); //Принимаем данные и выводим их на экран
     }
 
     // check CAD result
