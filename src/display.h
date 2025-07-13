@@ -232,8 +232,8 @@ void printStateResult_RX(int &state, String &read_str)
     #endif
     //Выводим сообщение об успішному прийомі
     displayPrintState(5, 5, RADIO_NAME, read_str);
-    displayPrintState(5, 20, F("RSSI: "), String(radio.getRSSI()) + " dBm");
-    displayPrintState(5, 30, F("SNR: "), String(radio.getSNR()) + " dB");
+    displayPrintState(5, 20, F("RSSI:     "), String(radio.getRSSI()) + " dBm");
+    displayPrintState(5, 30, F("SNR:      "), String(radio.getSNR()) + " dB");
     displayPrintState(5, 40, F("FREQ ERR: "), String(radio.getFrequencyError()) + " Hz");
 
     // #ifdef DEBUG_PRINT              
