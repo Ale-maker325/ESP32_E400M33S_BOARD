@@ -42,7 +42,7 @@
 
 ## 📷 Изображения
 
-> *(Добавь сюда скриншоты схемы из EasyEDA и фото платы — если они у тебя есть)*
+<img src="https://raw.githubusercontent.com/Ale-maker325/ESP32_E400M33S_BOARD/master/image/Screenshot_3.jpg" width="900"/>
 
 ---
 
