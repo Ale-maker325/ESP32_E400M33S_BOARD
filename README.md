@@ -42,7 +42,7 @@
 
 ## 📷 Изображения
 
-<img src="https://raw.githubusercontent.com/Ale-maker325/ESP32_E400M33S_BOARD/master/image/Screenshot_3.jpg" width="900"/>
+<img src="https://raw.githubusercontent.com/Ale-maker325/ESP32_E400M33S_BOARD/master/image/1752511780562.jpg" width="900"/>
 
 ---
 
