@@ -81,7 +81,7 @@ void displayInit()
    */
   void print_to_terminal_radio_state(String RadioName, String state)
   {
-    String str = RadioName + "RECEIVED DATA " + state;
+    String str = RadioName + state;
     Serial.println(str);
   }
 
@@ -167,7 +167,7 @@ void printStateResultTX(int &state, String &transmit_str)
 
     #ifdef DEBUG_PRINT              
       //Выводим в сериал данные отправленного пакета
-      Serial.print(F("Data:\t\t"));
+      Serial.print(F("Data:\t"));
       Serial.println(transmit_str);
     #endif
 

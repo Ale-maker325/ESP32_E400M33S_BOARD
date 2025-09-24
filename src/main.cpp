@@ -208,9 +208,18 @@ void radio_TX_loop()
   #ifdef TRANSMITTER   //Если определен как передатчик
     //проверяем, была ли предыдущая передача успешной
     #ifdef DEBUG_PRINT
-      Serial.println("..................................................");
+      Serial.println("================================================================================================");
+      Serial.println(F("radio_TX_loop(): Ожидаем окончания передачи предыдущего пакета ..."));
+      Serial.print("radio_TX_loop(): operationDone = ");
+      if(operationDone == true) Serial.println("true");
+      else  Serial.println("false");  
     #endif
+
     if(operationDone) {
+      #ifdef DEBUG_PRINT
+        Serial.println("================================================================================================");
+        Serial.println(F("radio_TX_loop(): передаём новый пакет ..."));
+      #endif
       
       //Сбрасываем сработавший флаг прерывания
       operationDone = false;
@@ -219,7 +228,24 @@ void radio_TX_loop()
       String str = "#" + String(count++);
 
       transmit_and_print_data(str);
+
+      #ifdef DEBUG_PRINT
+        Serial.println(F("radio_TX_loop(): Передача пакета завершена"));
+        Serial.print("radio_TX_loop(): operationDone = ");
+        if(operationDone == true) Serial.println("true");
+        else  Serial.println("false"); 
+        Serial.println("================================================================================================");
+      #endif
        
+    }
+    else {
+      #ifdef DEBUG_PRINT
+        Serial.println(F("radio_TX_loop(): Передача до сих пор не окончена ..."));
+        Serial.print("radio_TX_loop(): operationDone = ");
+        if(operationDone == true) Serial.println("true");
+        else  Serial.println("false"); 
+        Serial.println("================================================================================================");
+      #endif
     }
 
        
@@ -268,16 +294,26 @@ void setup() {
   pinMode(LED_PIN, OUTPUT);      //Контакт управління світлодіодом налаштовуємо як вихідний
   pinMode(FAN, OUTPUT);          //Контакт управління вентилятором налаштовуємо як вихідний
   
-  //Встановлюємо параметри конфігурації радіо-модуля.
+  //Визначаємо параметри конфігурації радіо-модуля (просто викликаємо функцію, яка задасть всі параметри, які задані в файлі "settings.h")
   setRadioMode();
+
   //Ініціалізуємо радіо-модуль
   radioBeginAll();
   
   //Назначаем контакты для управлением вкл./выкл. усилителем передатчика
   radio.setRfSwitchPins(RX_EN_PIN, TX_EN_PIN);
+  radio.setDio2AsRfSwitch(true); //Використовуємо DIO2 для управління перемиканням антени
+  radio.setTCXO(2.4); //Вказуємо напругу живлення TCXO, якщо він використовується
+
+
+
     
-  //Устанавливаем наши значения, определённые ранее в структуре config_radio1
+  //Устанавливаем наши значения, определённые ранее для структуры config_radio1
   radio_setSettings(radio, config_radio);
+
+  //Устанавливаем функцию, которая будет вызываться при отправке пакета данных модемом
+  radio.setPacketSentAction(flag_operationDone);
+  //radio.setDio1Action(flag_operationDone);
   
   RadioStart(); //Запускаем радио-модуль
 

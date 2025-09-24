@@ -17,24 +17,13 @@ static int state = RADIOLIB_ERR_NONE; // Переменная, хранящая 
 SPIClass SPI_MODEM;
 
 #ifdef SX1278_MODEM
+  SX1278 radio = new Module(NSS_PIN, BUSY_PIN, NRST_PIN, DIO1_PIN); //Инициализируем экземпляр радио
   #define RADIO_CLASS_NAME SX1278
-  // Функция для встановлення налаштувань радіо-модуля SX1278
-  // Ця функція повинна бути реалізована в іншому файлі, якщо вона не переопределена
-  // в іншому файлі, то буде використовуватися ця реалізація
-  //void radio_setSettings(RADIO_CLASS_NAME radio, LORA_CONFIGURATION config_radio) __attribute__ ((weak));
-#elif defined(SX1268_MODEM)
-  #define RADIO_CLASS_NAME SX1268
-  // Функція для встановлення налаштувань радіо-модуля SX1262
-  // Ця функція повинна бути реалізована в іншому файлі, якщо вона не переопределена
-  // в іншому файлі, то буде використовуватися ця реалізація
-  //void radio_setSettings(RADIO_CLASS_NAME radio, LORA_CONFIGURATION config_radio) __attribute__ ((weak));
 #endif
-
-//#ifdef SX1278_MODEM
-  RADIO_CLASS_NAME radio = new Module(NSS_PIN, BUSY_PIN, NRST_PIN, DIO1_PIN); //Инициализируем экземпляр радио
-//#elif defined(SX1268_MODEM)
-  //SX1268 radio = new Module(NSS_PIN, BUSY_PIN, NRST_PIN, DIO1_PIN); //Инициализируем экземпляр радио
-//#endif
+#ifdef SX1268_MODEM
+  SX1268 radio = new Module(NSS_PIN, DIO1_PIN, NRST_PIN, BUSY_PIN); //Инициализируем экземпляр радио
+  #define RADIO_CLASS_NAME SX1268
+#endif
 
 #ifdef RECEIVER
   static String receive_str = " ";  // Строка для зберігання отриманих даних по радіо
@@ -79,20 +68,27 @@ String SPACE = F(" ");
 * @brief Структура для зберігання параметрів конфігурації радіо-модуля.
 *  Ця структура містить всі налаштування, які можна змінити для налаштування роботи радіо-модуля, 
 *  але налаштування будуть застосовані лише після виклику функції setRadioMode(), який бере
-*  парамерти з налаштувань, які задані в файлі "settings.h". Тут ніякі параметри змінювати не потрібно
+*  парамерти з налаштувань, які задані в файлі "settings.h". Тут ніякі параметри змінювати не потрібно,
+*  всі налаштування будуть задані в файлі "settings.h", та ініційовані в функції setRadioMode().
 */
 struct LORA_CONFIGURATION
 {
-  float frequency = 441.0;        //Частота работы передатчика
-  float bandwidth = 125.0;        //Полоса пропускания (по-умолчанию 125 килогерц)
-  uint8_t spreadingFactor = 9;   //Коэффициент расширения (по-умолчанию 9)
-  uint8_t codingRate = 7;         //Скорость кодирования (по-умолчанию 7)
-  uint8_t syncWord = 0x18;        //Слово синхронизации (по-умолчанию 0х18). ВНИМАНИЕ! Значение 0x34 зарезервировано для сетей LoRaWAN и нежелательно для использования
-  int8_t outputPower = 15;        //Установить выходную мощность (по-умолчанию 15 дБм) (допустимый диапазон -3 - 17 дБм) ПРИМЕЧАНИЕ: значение 20 дБм позволяет работать на большой мощности, но передача рабочий цикл НЕ ДОЛЖЕН ПРЕВЫШАТЬ 1
-  uint8_t currentLimit = 100;      //Установить предел защиты по току (по-умолчанию до 80 мА) (допустимый диапазон 45 - 240 мА) ПРИМЕЧАНИЕ: установить значение 0 для отключения защиты от перегрузки по току
-  int16_t preambleLength = 8;    //Установить длину преамбулы (по-умолчанию в 8 символов) (допустимый диапазон 6 - 65535)
-  uint8_t gain = 0;               //Установить регулировку усилителя (по-умолчанию 1) (допустимый диапазон 1 - 6, где 1 - максимальный рост) ПРИМЕЧАНИЕ: установить значение 0, чтобы включить автоматическую регулировку усиления оставьте в 0, если вы не знаете, что вы делаете
-
+  float frequency = 0.0;        //Частота работы передатчика
+  float bandwidth = 0.0;        //Полоса пропускания (по-умолчанию 125 килогерц)
+  uint8_t spreadingFactor = 0;   //Коэффициент расширения (по-умолчанию 9)
+  uint8_t codingRate = 0;         //Скорость кодирования (по-умолчанию 7)
+  uint8_t syncWord = 0x00;        //Слово синхронизации (по-умолчанию 0х18). ВНИМАНИЕ! Значение 0x34 зарезервировано для сетей LoRaWAN и нежелательно для использования
+  int8_t outputPower = 0;        //Установить выходную мощность (по-умолчанию 15 дБм) (допустимый диапазон -3 - 17 дБм) ПРИМЕЧАНИЕ: значение 20 дБм позволяет работать на большой мощности, но передача рабочий цикл НЕ ДОЛЖЕН ПРЕВЫШАТЬ 1
+  uint8_t currentLimit = 0;      //Установить предел защиты по току (по-умолчанию до 80 мА) (допустимый диапазон 45 - 240 мА) ПРИМЕЧАНИЕ: установить значение 0 для отключения защиты от перегрузки по току
+  int16_t preambleLength = 0;    //Установить длину преамбулы (по-умолчанию в 8 символов) (допустимый диапазон 6 - 65535)
+  #ifdef SX1278_MODEM
+    uint8_t gain = 0;               //Установить регулировку усилителя (по-умолчанию 1) (допустимый диапазон 1 - 6, где 1 - максимальный рост) ПРИМЕЧАНИЕ: установить значение 0, чтобы включить автоматическую регулировку усиления оставьте в 0, если вы не знаете, что вы делаете
+  #endif
+  #ifdef SX1268_MODEM
+    bool CRC = false;             //Установить контрольную сумму CRC (по-умолчанию отключено)
+    float TCXO_V = 0;             //Установить напряжение TCXO. Примечание: установите значение 0, чтобы отключить TCXO
+    bool DIO2_RF_SW = false;      //Установить DIO2 как RF Switch (по-умолчанию отключено)
+  #endif
 
 };
 
@@ -103,20 +99,35 @@ LORA_CONFIGURATION config_radio;
 
 
 /**
- * @brief Функція, яка задає параметри конфігурації радіо-модуля.
+ * @brief Функція, яка задає параметри конфігурації налаштувань радіо-модуля.
  * 
  */
 void setRadioMode()
 {
-  config_radio.frequency = RADIO_FREQ;
-  config_radio.bandwidth = RADIO_BANDWIDTH;
-  config_radio.spreadingFactor = RADIO_SPREAD_FACTOR;
-  config_radio.codingRate = RADIO_CODING_RATE;
-  config_radio.syncWord = RADIO_SYNC_WORD;
-  config_radio.outputPower = RADIO_OUTPUT_POWER;
-  config_radio.currentLimit = RADIO_CURRENT_LIMIT;
-  config_radio.preambleLength = RADIO_PREAMBLE_LENGTH;
-  config_radio.gain = RADIO_GAIN;
+  #ifdef SX1278_MODEM
+    config_radio.frequency = RADIO_FREQ;
+    config_radio.bandwidth = RADIO_BANDWIDTH;
+    config_radio.spreadingFactor = RADIO_SPREAD_FACTOR;
+    config_radio.codingRate = RADIO_CODING_RATE;
+    config_radio.syncWord = RADIO_SYNC_WORD;
+    config_radio.outputPower = RADIO_OUTPUT_POWER;
+    config_radio.currentLimit = RADIO_CURRENT_LIMIT;
+    config_radio.preambleLength = RADIO_PREAMBLE_LENGTH;
+    config_radio.gain = RADIO_GAIN;
+  #endif
+  #ifdef SX1268_MODEM
+    config_radio.frequency = RADIO_FREQ;
+    config_radio.bandwidth = RADIO_BANDWIDTH;
+    config_radio.spreadingFactor = RADIO_SPREAD_FACTOR;
+    config_radio.codingRate = RADIO_CODING_RATE;
+    config_radio.syncWord = RADIO_SYNC_WORD;
+    config_radio.outputPower = RADIO_OUTPUT_POWER;
+    config_radio.currentLimit = RADIO_CURRENT_LIMIT;
+    config_radio.preambleLength = RADIO_PREAMBLE_LENGTH;
+    config_radio.CRC = RADIO_CRC;
+    config_radio.TCXO_V = RADIO_TCXO_V;
+    config_radio.DIO2_RF_SW = RADIO_DIO2_AS_RF_SWITCH;
+  #endif
 }
 
 //Флаг, який вказує, що операція завершена
@@ -131,7 +142,7 @@ volatile bool operationDone = false;
  * 
  * @return IRAM_ATTR 
  */
-IRAM_ATTR void flag_operationDone(void) {
+ICACHE_RAM_ATTR void flag_operationDone(void) {
   // Встановлюємо флаг, що операція завершена
   operationDone = true;
 }
@@ -151,8 +162,7 @@ bool ICACHE_RAM_ATTR WaitOnBusy()
     uint32_t startTime = 0;
     #ifdef DEBUG_PRINT
       Serial.println("");
-      Serial.print(F("*************************  WaitOnBusy  *************************"));
-      Serial.println("");
+      Serial.println(F("WaitOnBusy(): Ожидаем освобождения радио BUSY_PIN"));
     #endif
 
     while (true)
@@ -163,7 +173,10 @@ bool ICACHE_RAM_ATTR WaitOnBusy()
       uint32_t now = micros();
       if (startTime == 0) startTime = now;
       if ((now - startTime) > wtimeoutUS) return false;
+      
     }
+
+    
 }
 
 
@@ -245,8 +258,10 @@ void radioBeginAll()
   // Якщо ініціалізація пройшла успішно, то виводимо повідомлення на термінал та на дисплей
   printRadioBeginResult(state);
 
-  //Зачекаємо, поки радіо не буде готове до роботи
-  WaitOnBusy();
+  //#ifdef SX1278_MODEM
+    //Зачекаємо, поки радіо не буде готове до роботи
+    //WaitOnBusy();
+  //#endif
  
   #ifdef DEBUG_PRINT
     delay(1000);
@@ -278,7 +293,6 @@ void radio_setSettings(RADIO_CLASS_NAME radio, LORA_CONFIGURATION config_radio)
       Serial.println(F("Selected frequency is invalid for this module!"));
       display.clearDisplay();
       displayPrintState(5, 5, RADIO_NAME, F("ERROR FREQ"));
-      //displayPrintState(5, 20, RADIO_NAME, F("Selected frequency is invalid for this module!"));
     #endif
     while (true);
   }
@@ -294,7 +308,6 @@ void radio_setSettings(RADIO_CLASS_NAME radio, LORA_CONFIGURATION config_radio)
       Serial.println(F("Selected bandwidth is invalid for this module!"));
       display.clearDisplay();
       displayPrintState(5, 5, RADIO_NAME, F("ERROR BADWIDTH"));
-      //displayPrintState(5, 20, RADIO_NAME, F("Selected bandwidth is invalid for this module!"));
     #endif
     while (true);
   }
@@ -309,7 +322,6 @@ void radio_setSettings(RADIO_CLASS_NAME radio, LORA_CONFIGURATION config_radio)
       Serial.println(F("Selected spreading factor is invalid for this module!"));
       display.clearDisplay();
       displayPrintState(5, 5, RADIO_NAME, F("ERROR SF"));
-      //displayPrintState(5, 20, RADIO_NAME, F("Selected spreading factor is invalid for this module!"));
     #endif
     while (true);
   }
@@ -324,7 +336,6 @@ void radio_setSettings(RADIO_CLASS_NAME radio, LORA_CONFIGURATION config_radio)
       Serial.println(F("Selected coding rate is invalid for this module!"));
       display.clearDisplay();
       displayPrintState(5, 5, RADIO_NAME, F("ERROR CR"));
-      //displayPrintState(5, 20, RADIO_NAME, F("Selected coding rate is invalid for this module!"));
     #endif
     while (true);
   }
@@ -339,7 +350,6 @@ void radio_setSettings(RADIO_CLASS_NAME radio, LORA_CONFIGURATION config_radio)
       Serial.println(F("Unable to set sync word!"));
       display.clearDisplay();
       displayPrintState(5, 5, RADIO_NAME, F("ERROR SYNC"));
-      //displayPrintState(5, 20, RADIO_NAME, F("Unable to set sync word!"));
     #endif
     while (true);
   }
@@ -354,7 +364,6 @@ void radio_setSettings(RADIO_CLASS_NAME radio, LORA_CONFIGURATION config_radio)
       Serial.println(F("Selected output power is invalid for this module!"));
       display.clearDisplay();
       displayPrintState(5, 5, RADIO_NAME, F("ERROR POWER"));
-      //displayPrintState(5, 20, RADIO_NAME, F("Selected output power is invalid for this module!"));
     #endif
     while (true);
   }
@@ -369,7 +378,6 @@ void radio_setSettings(RADIO_CLASS_NAME radio, LORA_CONFIGURATION config_radio)
       Serial.println(F("Selected preamble length is invalid for this module!"));
       display.clearDisplay();
       displayPrintState(5, 5, RADIO_NAME, F("ERROR PREAMBLE"));
-      //displayPrintState(5, 20, RADIO_NAME, F("Selected preamble length is invalid for this module!"));
     #endif
     while (true);
   }
@@ -377,6 +385,50 @@ void radio_setSettings(RADIO_CLASS_NAME radio, LORA_CONFIGURATION config_radio)
   Serial.print(F("Set preambleLength = "));
   Serial.println(config_radio.preambleLength);
 
+  #ifdef SX1268_MODEM
+    // встановити контрольну суму CRC
+    if (radio.setCRC(config_radio.CRC) == RADIOLIB_ERR_INVALID_CRC_CONFIGURATION) {
+      #ifdef DEBUG_PRINT
+        Serial.println(F("Selected CRC is invalid for this module!"));
+        display.clearDisplay();
+        displayPrintState(5, 5, RADIO_NAME, F("ERROR CRC"));
+      #endif
+      while (true);
+    }
+    #ifdef DEBUG_PRINT
+      Serial.print(F("Set CRC = "));
+      Serial.println(config_radio.CRC);
+    #endif
+
+    // встановити напругу TCXO
+    if (radio.setTCXO(config_radio.TCXO_V) == RADIOLIB_ERR_INVALID_TCXO_VOLTAGE) {
+      #ifdef DEBUG_PRINT
+        Serial.println(F("Selected TCXO voltage is invalid for this module!"));
+        display.clearDisplay();
+        displayPrintState(5, 5, RADIO_NAME, F("ERROR TCXO"));
+      #endif
+      while (true);
+    }
+    #ifdef DEBUG_PRINT
+      Serial.print(F("Set TCXO_V = "));
+      Serial.println(config_radio.TCXO_V);    
+    #endif
+    
+    // встановити DIO2 як RF Switch
+    if (radio.setDio2AsRfSwitch(config_radio.DIO2_RF_SW) != RADIOLIB_ERR_NONE) {
+      #ifdef DEBUG_PRINT
+        Serial.println(F("Unable to set DIO2 as RF Switch!"));
+        display.clearDisplay();
+        displayPrintState(5, 5, RADIO_NAME, F("ERROR DIO2"));
+      #endif
+      while (true);
+    }
+    #ifdef DEBUG_PRINT
+      Serial.print(F("Set DIO2_RF_SW = "));
+      Serial.println(config_radio.DIO2_RF_SW);
+    #endif
+
+  #endif
   
 
   Serial.println(F("All settings successfully set!"));
@@ -395,15 +447,48 @@ void radio_setSettings(RADIO_CLASS_NAME radio, LORA_CONFIGURATION config_radio)
 
 
 
-
+/**
+ * @brief Функция отправляет данные по радио и выводит результат передачи на экран и в сериал-порт
+ * 
+ * @param transmit_str - строка с данными для передачи
+ */
 void transmit_and_print_data(String &transmit_str)
 {
+  
+  #ifdef DEBUG_PRINT
+    uint16_t irqFlags = radio.getIrqFlags();
+    Serial.print(F("IrqFlags: 0x"));
+    Serial.println(irqFlags, HEX);
+    Serial.print("BUSY перед началом передачи: ");
+    Serial.println(digitalRead(BUSY_PIN));
+    Serial.print("transmit_and_print_data: operationDone = ");
+    if(operationDone == true) Serial.println("true");
+    else  Serial.println("false");  
+  #endif
+
+
   //Посылаем пакет
   state = radio.startTransmit(transmit_str);
+
+  #ifdef DEBUG_PRINT
+    irqFlags = radio.getIrqFlags();
+    Serial.print(F("IrqFlags: 0x"));
+    Serial.println(irqFlags, HEX);
+    Serial.print("BUSY после начала передачи: ");
+    Serial.println(digitalRead(BUSY_PIN));
+    Serial.print("transmit_and_print_data: operationDone = ");
+    if(operationDone == true) Serial.println("true");
+    else  Serial.println("false");
+  #endif
+
+
   //Ждём завершения передачи
-  WaitOnBusy();
+  // WaitOnBusy();
+  
   //Печатаем данные куда надо (в сериал, если он активирован, и на дисплей)
   printStateResultTX(state, transmit_str);
+  radio.finishTransmit();
+
   
 }
 
@@ -431,86 +516,6 @@ void receive_and_print_data(String &receive_str)
   //Печатаем данные куда надо (в сериал, если он активирован, и на дисплей)
   printStateResult_RX(state_read, receive_str);
 }
-
-
-
-// /**
-//  * @brief Функція для сканування каналу на наявність LoRa-передачі.
-//  * Ця функція викликає метод scanChannel() радіо-модуля, який перевіряє, чи є LoRa-пакет на поточному каналі.
-//  * Якщо LoRa-пакет виявлено, то виводиться відповідне повідомлення.
-//  * Якщо канал вільний, то також виводиться повідомлення про це.
-//  * Якщо сталася помилка, то виводиться код помилки.
-//  */
-// void radio_scan_channel()
-// {
-//   int x=5;
-//   int y=35;
-
-//   #ifdef DEBUG_PRINT
-//     Serial.println(F("Scanning channel for LoRa transmission ... "));
-//   #endif
-
-//   // start scanning current channel
-//   int state_scanChannel = radio.scanChannel();
-
-//   if (state_scanChannel == RADIOLIB_LORA_DETECTED) {
-//     String str_scan_lora_channel = F("DETECTED!");
-//     // LoRa preamble was detected
-//     #ifdef DEBUG_PRINT
-//       Serial.println(str_scan_lora_channel);
-//     #endif
-//     displayPrintState(x, y, RADIO_NAME, str_scan_lora_channel);
-
-//   } else if (state_scanChannel == RADIOLIB_CHANNEL_FREE) {
-//     String str_scan_lora_channel = F("NOT DETECTED!");
-//     // no preamble was detected, channel is free
-//     #ifdef DEBUG_PRINT
-//       Serial.println(F("No preamble was detected, channel is free!"));
-//     #endif
-//     displayPrintState(x, y, RADIO_NAME, str_scan_lora_channel);
-
-
-//   } 
-  
-//   // else if (state_scanChannel == RADIOLIB_ERR_NONE) {
-//   //   String str_scan_lora_channel = F("LoRa ERROR!");
-//   //   // some other error occurred
-//   //   #ifdef DEBUG_PRINT
-//   //     Serial.print(F("failed, code "));
-//   //     Serial.println(state);
-//   //   #endif
-//   //   displayPrintState(x, y, RADIO_NAME, str_scan_lora_channel);
-//   // }
-
-
-//   // // check CAD result
-//     // int state_scanChannel = radio1.getChannelScanResult();
-
-//     // if (state_scanChannel == RADIOLIB_LORA_DETECTED) {
-//     //   // LoRa packet was detected
-//     //   #ifdef DEBUG_PRINT
-//     //   Serial.println(F("[LR1110] Packet detected!"));
-//     //   #endif
-
-//     // } else if (state_scanChannel == RADIOLIB_CHANNEL_FREE) {
-//     //   // channel is free
-//     //   #ifdef DEBUG_PRINT
-//     //   Serial.println(F("[LR1110] Channel is free!"));
-//     //   #endif
-
-//     // } else {
-//     //   // some other error occurred
-//     //   #ifdef DEBUG_PRINT
-//     //   Serial.print(F("[LR1110] Failed, code "));
-//     //   Serial.println(state);
-//     //   #endif
-
-//     // }
-
-// }
-
-
-
 
 
 
@@ -580,19 +585,23 @@ void RadioStart()
 
   #ifdef TRANSMITTER  //Если определена работа модуля как передатчика
 
-    //Устанавливаем функцию, которая будет вызываться при отправке пакета данных модемом
-    radio.setPacketSentAction(flag_operationDone);
-    
     #ifdef DEBUG_PRINT
-      //Начинаем передачу пакетов
-      Serial.print(TABLE_LEFT);
-      Serial.print(F("SENDING FIRST PACKET"));
-      Serial.println(TABLE_RIGHT);
+      //Начинаем передачу первого проверочного пакета
+      Serial.println(" ");
+      Serial.println("===============================================================================================");
+      Serial.println(F("RadioStart(): начинаем передачу первого стартового пакета"));
     #endif
 
     String str = F("RADIO START!");
 
     transmit_and_print_data(str);
+
+    #ifdef DEBUG_PRINT
+      //Закончили передачу первого проверочного пакета
+      Serial.println(F("RadioStart(): передача стартового пакета завершена"));
+      Serial.println("===============================================================================================");
+      Serial.println(" ");
+    #endif
     
     digitalWrite(LED_PIN, LOW);     //Включаем светодиод, сигнализация об передаче/приёма пакета
 
@@ -602,10 +611,6 @@ void RadioStart()
 
   #endif
   
-  #ifdef DEBUG_PRINT
-    Serial.println(F("**************************************"));
-  #endif
-
   digitalWrite(LED_PIN, HIGH);      //Вимикаємо світлодіод, сигналізація про передачу/прийом пакета
 
   #ifdef TRANSMITTER
